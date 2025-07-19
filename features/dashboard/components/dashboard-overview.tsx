@@ -252,205 +252,187 @@ export function DashboardOverview() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Encabezado */}
-      <div className="flex flex-col justify-between space-y-4 md:flex-row md:items-center md:space-y-0">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-            Hola, {user?.firstName || "Usuario"}
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Aquí tienes un resumen de tu actividad reciente
-          </p>
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Contenido scrolleable */}
+      <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 pr-2">
+        {/* Encabezado - Compacto */}
+        <div className="flex flex-col justify-between space-y-2 sm:space-y-4 md:flex-row md:items-center md:space-y-0 flex-shrink-0">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-100">
+              Hola, {user?.firstName || "Usuario"}
+            </h1>
+            <p className="text-sm text-zinc-400">
+              Resumen de tu actividad reciente
+            </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="sm" className="hidden sm:flex bg-zinc-800/30 border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100">
+              <Plus className="mr-2 h-4 w-4" />
+              Nueva tarea
+            </Button>
+            <NotificationSystem />
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" className="hidden sm:flex">
-            <Plus className="mr-2 h-4 w-4" />
-            Nueva tarea
-          </Button>
-          <NotificationSystem />
+
+        {/* Estadísticas rápidas - Responsive y Zinc Ultra Oscuro */}
+        <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
+          <Card className="bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-200 hover:border-zinc-700">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium text-zinc-300">Instituciones</CardTitle>
+              <div className="p-1.5 sm:p-2 bg-orange-500/10 rounded-lg border border-orange-500/20">
+                <School className="h-4 w-4 sm:h-5 sm:w-5 text-orange-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl sm:text-2xl font-bold text-zinc-100">{stats?.institutions || 5}</div>
+              <p className="text-xs text-green-400 flex items-center mt-1">
+                <TrendingUp className="h-3 w-3 mr-1" />
+                <span className="hidden sm:inline">+2 desde el mes pasado</span>
+                <span className="sm:hidden">+2 mes</span>
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-200 hover:border-zinc-700">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium text-zinc-300">Cursos</CardTitle>
+              <div className="p-1.5 sm:p-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl sm:text-2xl font-bold text-zinc-100">{stats?.courses || 12}</div>
+              <p className="text-xs text-green-400 flex items-center mt-1">
+                <TrendingUp className="h-3 w-3 mr-1" />
+                <span className="hidden sm:inline">+5 desde la semana pasada</span>
+                <span className="sm:hidden">+5 semana</span>
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-200 hover:border-zinc-700">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium text-zinc-300">Estudiantes</CardTitle>
+              <div className="p-1.5 sm:p-2 bg-purple-500/10 rounded-lg border border-purple-500/20">
+                <Users className="h-4 w-4 sm:h-5 sm:w-5 text-purple-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl sm:text-2xl font-bold text-zinc-100">{stats?.students || 245}</div>
+              <p className="text-xs text-green-400 flex items-center mt-1">
+                <TrendingUp className="h-3 w-3 mr-1" />
+                <span className="hidden sm:inline">+12 desde ayer</span>
+                <span className="sm:hidden">+12 hoy</span>
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-200 hover:border-zinc-700">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium text-zinc-300">
+                <span className="hidden sm:inline">Promedio General</span>
+                <span className="sm:hidden">Promedio</span>
+              </CardTitle>
+              <div className="p-1.5 sm:p-2 bg-orange-500/10 rounded-lg border border-orange-500/20">
+                <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-orange-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl sm:text-2xl font-bold text-zinc-100">
+                {stats?.averageGrade?.toFixed(1) || "7.8"}
+              </div>
+              <p className="text-xs text-green-400 flex items-center mt-1">
+                <TrendingUp className="h-3 w-3 mr-1" />
+                <span className="hidden sm:inline">+0.5 vs mes anterior</span>
+                <span className="sm:hidden">+0.5</span>
+              </p>
+            </CardContent>
+          </Card>
         </div>
-      </div>
 
-      {/* Estadísticas rápidas - Estilo Zinc Oscuro */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-200 hover:border-zinc-600">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-300">Instituciones</CardTitle>
-            <div className="p-2 bg-orange-500/10 rounded-lg border border-orange-500/20">
-              <School className="h-5 w-5 text-orange-400" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-zinc-100">{stats?.institutions || 5}</div>
-            <p className="text-xs text-green-400 flex items-center mt-1">
-              <TrendingUp className="h-3 w-3 mr-1" />
-              +2 desde el mes pasado
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-200 hover:border-zinc-600">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-300">Cursos</CardTitle>
-            <div className="p-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
-              <BookOpen className="h-5 w-5 text-blue-400" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-zinc-100">{stats?.courses || 12}</div>
-            <p className="text-xs text-green-400 flex items-center mt-1">
-              <TrendingUp className="h-3 w-3 mr-1" />
-              +5 desde la semana pasada
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-200 hover:border-zinc-600">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-300">Estudiantes</CardTitle>
-            <div className="p-2 bg-purple-500/10 rounded-lg border border-purple-500/20">
-              <Users className="h-5 w-5 text-purple-400" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-zinc-100">{stats?.students || 245}</div>
-            <p className="text-xs text-green-400 flex items-center mt-1">
-              <TrendingUp className="h-3 w-3 mr-1" />
-              +12 desde ayer
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-200 hover:border-zinc-600">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-300">
-              Promedio General
-            </CardTitle>
-            <div className="p-2 bg-orange-500/10 rounded-lg border border-orange-500/20">
-              <BarChart3 className="h-5 w-5 text-orange-400" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-zinc-100">
-              {stats?.averageGrade?.toFixed(1) || "7.8"}
-            </div>
-            <p className="text-xs text-green-400 flex items-center mt-1">
-              <TrendingUp className="h-3 w-3 mr-1" />
-              +0.5 vs mes anterior
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        {/* Gráfico de tendencias - Estilo Zinc Oscuro */}
-        <Card className="col-span-4 bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-200 hover:border-zinc-600">
+        {/* Últimas calificaciones - Simplificado */}
+        <Card className="bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-200 hover:border-zinc-700">
           <CardHeader>
-            <CardTitle className="text-zinc-100 flex items-center gap-2">
-              <LineChart className="h-5 w-5 text-orange-400" />
-              Tendencias de Calificaciones
+            <CardTitle className="text-zinc-100 flex items-center gap-2 text-sm sm:text-base">
+              <ClipboardList className="h-4 w-4 sm:h-5 sm:w-5 text-orange-400" />
+              <span className="hidden sm:inline">Últimas Calificaciones</span>
+              <span className="sm:hidden">Calificaciones</span>
             </CardTitle>
-            <CardDescription className="text-zinc-400">
-              Evolución de las calificaciones en los últimos 6 meses
+            <CardDescription className="text-zinc-400 text-xs sm:text-sm">
+              <span className="hidden sm:inline">Actividad reciente en el sistema</span>
+              <span className="sm:hidden">Recientes</span>
             </CardDescription>
           </CardHeader>
-          <CardContent className="pl-2">
-            <div className="h-[300px]">
-              <GradeTrendsChart />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Últimas calificaciones - Estilo Zinc Oscuro */}
-        <Card className="col-span-3 bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-200 hover:border-zinc-600">
-          <CardHeader>
-            <CardTitle className="text-zinc-100 flex items-center gap-2">
-              <ClipboardList className="h-5 w-5 text-orange-400" />
-              Últimas Calificaciones
-            </CardTitle>
-            <CardDescription className="text-zinc-400">Actividad reciente en el sistema</CardDescription>
-          </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {stats?.recentGrades?.map((grade) => (
+            <div className="space-y-3">
+              {stats?.recentGrades?.slice(0, 4).map((grade) => (
                 <div
                   key={grade.id}
-                  className="flex items-center justify-between rounded-lg border border-zinc-600 p-3 hover:bg-zinc-700/50 transition-colors"
+                  className="flex items-center justify-between rounded-lg border border-zinc-700 p-3 hover:bg-zinc-800/50 transition-colors"
                 >
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium leading-none text-zinc-100">
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <p className="text-sm font-medium leading-none text-zinc-100 truncate">
                       {grade.student_name}
                     </p>
-                    <p className="text-sm text-zinc-400">
+                    <p className="text-xs text-zinc-400 truncate">
                       {grade.subject_name} • {grade.course_name}
                     </p>
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-xs text-zinc-500 hidden sm:block">
                       {formatDate(grade.date)}
                     </p>
                   </div>
-                  <Badge className={`${grade.grade && grade.grade >= 7 ? 'bg-green-500/20 text-green-400 border-green-500/30' : grade.grade && grade.grade >= 4 ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' : 'bg-red-500/20 text-red-400 border-red-500/30'}`}>
+                  <Badge className={`ml-2 ${grade.grade && grade.grade >= 7 ? 'bg-green-500/20 text-green-400 border-green-500/30' : grade.grade && grade.grade >= 4 ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' : 'bg-red-500/20 text-red-400 border-red-500/30'}`}>
                     {grade.grade?.toFixed(1) || "N/A"}
                   </Badge>
                 </div>
               ))}
-              <Button variant="outline" className="w-full mt-4 bg-zinc-700/30 border-zinc-600 text-zinc-300 hover:bg-zinc-700 hover:text-zinc-100" asChild>
+              <Button variant="outline" className="w-full mt-4 bg-zinc-800/30 border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 text-sm" asChild>
                 <Link href="/dashboard/notas">
-                  Ver todas las calificaciones
+                  <span className="hidden sm:inline">Ver todas las calificaciones</span>
+                  <span className="sm:hidden">Ver todas</span>
                 </Link>
               </Button>
             </div>
           </CardContent>
         </Card>
-      </div>
 
-      {/* Gráficos adicionales - Estilo Zinc Oscuro */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-200 hover:border-zinc-600">
+        {/* Acceso rápido a Analytics */}
+        <Card className="bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-200 hover:border-zinc-700">
           <CardHeader>
-            <CardTitle className="text-zinc-100 flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-orange-400" />
-              Rendimiento por Curso
+            <CardTitle className="text-zinc-100 flex items-center gap-2 text-sm sm:text-base">
+              <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-orange-400" />
+              Analytics Avanzados
             </CardTitle>
-            <CardDescription className="text-zinc-400">
-              Promedio de calificaciones por curso
+            <CardDescription className="text-zinc-400 text-xs sm:text-sm">
+              Accede a gráficos detallados y análisis profundos
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[250px]">
-              <CoursePerformanceChart />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-200 hover:border-zinc-600">
-          <CardHeader>
-            <CardTitle className="text-zinc-100 flex items-center gap-2">
-              <PieChart className="h-5 w-5 text-orange-400" />
-              Distribución de Calificaciones
-            </CardTitle>
-            <CardDescription className="text-zinc-400">
-              Distribución general de las calificaciones
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[250px]">
-              <GradeDistributionChart />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-200 hover:border-zinc-600">
-          <CardHeader>
-            <CardTitle className="text-zinc-100 flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-orange-400" />
-              Progreso de Estudiantes
-            </CardTitle>
-            <CardDescription className="text-zinc-400">
-              Evolución del rendimiento académico
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[250px]">
-              <StudentProgressChart />
+            <div className="grid grid-cols-2 gap-3">
+              <Button variant="outline" size="sm" className="bg-zinc-800/30 border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100" asChild>
+                <Link href="/dashboard/analytics/trends">
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  Tendencias
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" className="bg-zinc-800/30 border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100" asChild>
+                <Link href="/dashboard/analytics/performance">
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Rendimiento
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" className="bg-zinc-800/30 border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100" asChild>
+                <Link href="/dashboard/analytics/distribution">
+                  <PieChart className="h-4 w-4 mr-2" />
+                  Distribución
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" className="bg-zinc-800/30 border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100" asChild>
+                <Link href="/dashboard/analytics/progress">
+                  <Users className="h-4 w-4 mr-2" />
+                  Progreso
+                </Link>
+              </Button>
             </div>
           </CardContent>
         </Card>
