@@ -21,6 +21,9 @@ import {
   TrendingUp,
   School,
   Globe,
+  MoreVertical,
+  User,
+  LogOut,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -28,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { UserProfileButton } from "@/components/auth/user-profile-button";
+import { useUser, useClerk } from "@clerk/nextjs";
 
 const navigation = [
   {
@@ -110,6 +114,9 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
   const [rightPanelOpen, setRightPanelOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { user } = useUser();
+  const { signOut } = useClerk();
   const pathname = usePathname();
 
   useEffect(() => {
@@ -138,136 +145,86 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
     <div className="min-h-screen bg-zinc-950 p-2 sm:p-4">
       {/* Navbar Superior */}
       <div className="h-7 flex items-center justify-end px-4 mb-2 sm:mb-3">
-        <div className="flex items-center space-x-4 sm:space-x-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setRightPanelOpen(!rightPanelOpen)}
-            className="h-8 w-8 p-4 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 hidden lg:flex"
-            title="Toggle Panel de Actividad"
-          >
-            <Activity className="h-4 w-4" />
-          </Button>
-
-          {/* Botón de Notificaciones */}
+        <div className="flex items-center space-x-4">
+          {/* Botón de menú de tres puntos */}
           <div className="relative">
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setNotificationsOpen(!notificationsOpen)}
-              className="h-8 w-8 p-0 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 mr-2 relative"
-              title="Notificaciones"
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="h-8 w-8 p-0 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 flex items-center justify-center"
+              title="Menú"
             >
-              <Bell className="h-4 w-4" />
-              {/* Badge de notificaciones sin leer */}
-              <div className="absolute text-xs text-orange-400 -top-1 -right-1 w-5 h-5 bg-orange-400/20 border border-orange-400/20 backdrop-blur-lg rounded-full flex items-center justify-center">
-                <span className="text-xs font-bold">3</span>
-              </div>
+              <MoreVertical className="h-4 w-4" />
             </Button>
 
-            {/* Dropdown de Notificaciones */}
-            {notificationsOpen && (
-              <>
-                {/* Overlay para cerrar */}
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setNotificationsOpen(false)}
-                />
-
-                {/* Card de Notificaciones */}
-                <div className="absolute right-0 top-10 w-80 bg-zinc-900 rounded-xl shadow-2xl border border-zinc-800 z-50 overflow-hidden">
-                  {/* Header */}
-                  <div className="p-4 border-b border-zinc-800">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-zinc-100">
-                        Notificaciones
-                      </h3>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0 text-zinc-400 hover:text-zinc-200"
-                        onClick={() => setNotificationsOpen(false)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
+            {/* Menú desplegable */}
+            {menuOpen && (
+              <div className="absolute right-0 mt-2 w-64 bg-zinc-900 rounded-lg shadow-xl border border-zinc-800 z-50">
+                <div className="p-1">
+                  {/* Sección de perfil del usuario */}
+                  <div className="px-4 py-3 flex items-center border-b border-zinc-800">
+                    <div className="h-9 w-9 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {user?.imageUrl ? (
+                        <img
+                          src={user.imageUrl}
+                          alt={user.fullName || "Usuario"}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <User className="h-4 w-4 text-zinc-400" />
+                      )}
+                    </div>
+                    <div className="ml-3 overflow-hidden">
+                      <p className="text-sm font-medium text-zinc-100 truncate">
+                        {user?.fullName || "Usuario"}
+                      </p>
+                      <p className="text-xs text-zinc-400 truncate">
+                        {user?.primaryEmailAddress?.emailAddress || ""}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Lista de Notificaciones */}
-                  <div className="max-h-80 overflow-y-auto">
-                    <div className="p-2 ">
-                      {/* Notificación 1 */}
-                      <div className="p-3 hover:bg-zinc-800/50 rounded-lg transition-colors mb-2">
-                        <div className="flex items-start space-x-3">
-                          <div className="w-2 h-2 bg-orange-400/20 border border-orange-400 rounded-full mt-2 flex-shrink-0"></div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-zinc-100">
-                              Nueva calificación registrada
-                            </p>
-                            <p className="text-xs text-zinc-400 mt-1">
-                              Ana García obtuvo 9.5 en Matemáticas
-                            </p>
-                            <p className="text-xs text-zinc-500 mt-1">
-                              Hace 5 minutos
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Notificación 2 */}
-                      <div className="p-3 hover:bg-zinc-800/50 rounded-lg transition-colors mb-2">
-                        <div className="flex items-start space-x-3">
-                          <div className="w-2 h-2 bg-blue-400/20 border border-blue-400 rounded-full mt-2 flex-shrink-0"></div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-zinc-100">
-                              Nuevo estudiante matriculado
-                            </p>
-                            <p className="text-xs text-zinc-400 mt-1">
-                              Carlos López se unió al curso 5to A
-                            </p>
-                            <p className="text-xs text-zinc-500 mt-1">
-                              Hace 1 hora
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Notificación 3 */}
-                      <div className="p-3 hover:bg-zinc-800/50 rounded-lg transition-colors mb-2">
-                        <div className="flex items-start space-x-3">
-                          <div className="w-2 h-2 bg-green-400/20 border border-green-400 rounded-full mt-2 flex-shrink-0"></div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-zinc-100">
-                              Reporte mensual generado
-                            </p>
-                            <p className="text-xs text-zinc-400 mt-1">
-                              Informe de rendimiento académico disponible
-                            </p>
-                            <p className="text-xs text-zinc-500 mt-1">
-                              Hace 2 horas
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Footer */}
-                  <div className="p-3 border-t border-zinc-800">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full bg-zinc-800/30 border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
+                  <div className="py-1">
+                    <button
+                      onClick={() => {
+                        setRightPanelOpen(!rightPanelOpen);
+                        setMenuOpen(false);
+                      }}
+                      className="w-full flex items-center px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 rounded-md"
                     >
-                      Ver todas las notificaciones
-                    </Button>
+                      <Activity className="h-4 w-4 mr-3 text-zinc-400" />
+                      Panel de Actividad
+                    </button>
+                    <button
+                      onClick={() => {
+                        setNotificationsOpen(!notificationsOpen);
+                        setMenuOpen(false);
+                      }}
+                      className="w-full flex items-center px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 rounded-md"
+                    >
+                      <Bell className="h-4 w-4 mr-3 text-zinc-400" />
+                      Notificaciones
+                      <div className="ml-auto w-5 h-5 bg-orange-400/20 border border-orange-400/20 text-orange-400 text-xs rounded-full flex items-center justify-center">
+                        3
+                      </div>
+                    </button>
+                    <button className="w-full flex items-center px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 rounded-md">
+                      <Settings className="h-4 w-4 mr-3 text-zinc-400" />
+                      Configuración
+                    </button>
+                    <button
+                      onClick={() => signOut()}
+                      className="w-full flex items-center px-4 py-2 text-sm text-red-400 hover:bg-zinc-800 rounded-md mt-1"
+                    >
+                      <LogOut className="h-4 w-4 mr-3" />
+                      Cerrar sesión
+                    </button>
                   </div>
                 </div>
-              </>
+              </div>
             )}
           </div>
-
-          <UserProfileButton />
         </div>
       </div>
 
