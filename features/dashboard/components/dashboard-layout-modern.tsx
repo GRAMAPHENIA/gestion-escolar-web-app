@@ -20,6 +20,7 @@ import {
   Activity,
   TrendingUp,
   School,
+  Globe,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -136,13 +137,13 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-zinc-950 p-2 sm:p-4">
       {/* Navbar Superior */}
-      <div className="h-10 flex items-center justify-end px-4 mb-2 sm:mb-3">
-        <div className="flex items-center space-x-3">
+      <div className="h-7 flex items-center justify-end px-4 mb-2 sm:mb-3">
+        <div className="flex items-center space-x-4 sm:space-x-6">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setRightPanelOpen(!rightPanelOpen)}
-            className="h-8 w-8 p-0 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700 hidden lg:flex"
+            className="h-7 w-7 p-0 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700 hidden lg:flex"
             title="Toggle Panel de Actividad"
           >
             <Activity className="h-4 w-4" />
@@ -154,13 +155,13 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
               variant="ghost"
               size="sm"
               onClick={() => setNotificationsOpen(!notificationsOpen)}
-              className="h-8 w-8 p-0 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700 relative"
+              className="h-8 w-8 p-0 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 relative"
               title="Notificaciones"
             >
               <Bell className="h-4 w-4" />
               {/* Badge de notificaciones sin leer */}
-              <div className="absolute -top-1 -right-1 w-5 h-5 bg-orange-400 rounded-full flex items-center justify-center">
-                <span className="text-xs font-bold text-white">3</span>
+              <div className="absolute text-xs text-orange-400 -top-1 -right-1 w-5 h-5 bg-orange-400/20 border border-orange-400/20 backdrop-blur-lg rounded-full flex items-center justify-center">
+                <span className="text-xs font-bold">3</span>
               </div>
             </Button>
 
@@ -174,7 +175,7 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
                 />
 
                 {/* Card de Notificaciones */}
-                <div className="absolute right-0 top-10 w-80 bg-zinc-900 rounded-xl shadow-2xl border border-zinc-800 z-50 max-h-96 overflow-hidden">
+                <div className="absolute right-0 top-10 w-80 bg-zinc-900 rounded-xl shadow-2xl border border-zinc-800 z-50 overflow-hidden">
                   {/* Header */}
                   <div className="p-4 border-b border-zinc-800">
                     <div className="flex items-center justify-between">
@@ -194,11 +195,11 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
 
                   {/* Lista de Notificaciones */}
                   <div className="max-h-80 overflow-y-auto">
-                    <div className="p-2">
+                    <div className="p-2 ">
                       {/* Notificación 1 */}
-                      <div className="p-3 hover:bg-zinc-800/50 rounded-lg transition-colors border-l-2 border-orange-400">
+                      <div className="p-3 hover:bg-zinc-800/50 rounded-lg transition-colors mb-2">
                         <div className="flex items-start space-x-3">
-                          <div className="w-2 h-2 bg-orange-400 rounded-full mt-2 flex-shrink-0"></div>
+                          <div className="w-2 h-2 bg-orange-400/20 border border-orange-400 rounded-full mt-2 flex-shrink-0"></div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-zinc-100">
                               Nueva calificación registrada
@@ -214,9 +215,9 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
                       </div>
 
                       {/* Notificación 2 */}
-                      <div className="p-3 hover:bg-zinc-800/50 rounded-lg transition-colors border-l-2 border-blue-400">
+                      <div className="p-3 hover:bg-zinc-800/50 rounded-lg transition-colors mb-2">
                         <div className="flex items-start space-x-3">
-                          <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+                          <div className="w-2 h-2 bg-blue-400/20 border border-blue-400 rounded-full mt-2 flex-shrink-0"></div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-zinc-100">
                               Nuevo estudiante matriculado
@@ -232,9 +233,9 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
                       </div>
 
                       {/* Notificación 3 */}
-                      <div className="p-3 hover:bg-zinc-800/50 rounded-lg transition-colors border-l-2 border-green-400">
+                      <div className="p-3 hover:bg-zinc-800/50 rounded-lg transition-colors mb-2">
                         <div className="flex items-start space-x-3">
-                          <div className="w-2 h-2 bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
+                          <div className="w-2 h-2 bg-green-400/20 border border-green-400 rounded-full mt-2 flex-shrink-0"></div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-zinc-100">
                               Reporte mensual generado
@@ -344,7 +345,7 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
                   </div>
                 </div>
               </nav>
-
+              {/* Footer */}
               <div className="border-t border-zinc-700 p-4">
                 <div className="grid grid-cols-2 gap-2">
                   <Button
@@ -429,13 +430,54 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
             </div>
           </div>
 
-          <main className="flex-1 overflow-auto p-4 sm:p-6">{children}</main>
+          <div className="flex-1 overflow-auto p-4 sm:p-6">{children}</div>
+
+          {/* Footer del Contenido Principal */}
+          <div className="border-t border-zinc-900 p-4">
+            <div className="grid grid-cols-4 gap-2">
+              <div className="flex items-center justify-center">
+                <div className="p-2 rounded-lg bg-zinc-900/50">
+                  <Globe className="h-4 w-4 text-zinc-600" />
+                </div>
+                <span className="ml-2 text-xs font-medium text-zinc-600">
+                  5
+                </span>
+              </div>
+
+              <div className="flex items-center justify-center">
+                <div className="p-2 rounded-lg bg-zinc-900/50">
+                  <School className="h-4 w-4 text-zinc-600" />
+                </div>
+                <span className="ml-2 text-xs font-medium text-zinc-600">
+                  12
+                </span>
+              </div>
+
+              <div className="flex items-center justify-center">
+                <div className="p-2 rounded-lg bg-zinc-900/50">
+                  <BookOpen className="h-4 w-4 text-zinc-600" />
+                </div>
+                <span className="ml-2 text-xs font-medium text-zinc-600">
+                  245
+                </span>
+              </div>
+
+              <div className="flex items-center justify-center">
+                <div className="p-2 rounded-lg bg-zinc-900/50">
+                  <GraduationCap className="h-4 w-4 text-zinc-600" />
+                </div>
+                <span className="ml-2 text-xs font-medium text-zinc-600">
+                  8.7
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Panel Derecho */}
         {rightPanelOpen && (
-          <div className="col-span-3 row-span-11 bg-zinc-900/30 rounded-2xl shadow-2xl border border-zinc-800 flex flex-col overflow-hidden lg:flex">
-            <div className="p-4 border-b border-zinc-800">
+          <div className="col-span-3 row-span-11 bg-zinc-900/30 rounded-2xl shadow-2xl border border-zinc-900 flex flex-col overflow-hidden lg:flex">
+            <div className="p-4 border-b border-zinc-900">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-zinc-100">
                   Análisis
@@ -444,7 +486,7 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
                   variant="ghost"
                   size="sm"
                   onClick={() => setRightPanelOpen(false)}
-                  className="h-8 w-8 p-0 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/30"
+                  className="h-8 w-8 p-0 text-zinc-600 hover:text-zinc-200 hover:bg-zinc-900/30"
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -472,10 +514,10 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
                         <div className="p-2 bg-zinc-700/50 rounded-lg mr-3">
                           <Icon
                             className={cn(
-                              "h-5 w-5",
+                              "h-4 w-4",
                               isActive
                                 ? "text-orange-400"
-                                : "text-zinc-400 group-hover:text-zinc-200"
+                                : "text-zinc-600 group-hover:text-zinc-200"
                             )}
                           />
                         </div>
