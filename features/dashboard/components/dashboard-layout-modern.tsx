@@ -29,20 +29,75 @@ import { cn } from "@/lib/utils";
 import { UserProfileButton } from "@/components/auth/user-profile-button";
 
 const navigation = [
-  { name: "Inicio", href: "/dashboard", icon: Home, description: "Panel principal" },
-  { name: "Instituciones", href: "/dashboard/instituciones", icon: Database, description: "Gestión de instituciones" },
-  { name: "Cursos", href: "/dashboard/cursos", icon: BookOpen, description: "Administrar cursos" },
-  { name: "Profesores", href: "/dashboard/profesores", icon: Users, description: "Gestión de profesores" },
-  { name: "Alumnos", href: "/dashboard/alumnos", icon: GraduationCap, description: "Gestión de estudiantes" },
-  { name: "Notas", href: "/dashboard/notas", icon: BarChart3, description: "Sistema de calificaciones" },
-  { name: "Reportes", href: "/dashboard/reportes", icon: FileText, description: "Informes y estadísticas" },
+  {
+    name: "Inicio",
+    href: "/dashboard",
+    icon: Home,
+    description: "Panel principal",
+  },
+  {
+    name: "Instituciones",
+    href: "/dashboard/instituciones",
+    icon: Database,
+    description: "Gestión de instituciones",
+  },
+  {
+    name: "Cursos",
+    href: "/dashboard/cursos",
+    icon: BookOpen,
+    description: "Administrar cursos",
+  },
+  {
+    name: "Profesores",
+    href: "/dashboard/profesores",
+    icon: Users,
+    description: "Gestión de profesores",
+  },
+  {
+    name: "Alumnos",
+    href: "/dashboard/alumnos",
+    icon: GraduationCap,
+    description: "Gestión de estudiantes",
+  },
+  {
+    name: "Notas",
+    href: "/dashboard/notas",
+    icon: BarChart3,
+    description: "Sistema de calificaciones",
+  },
+  {
+    name: "Reportes",
+    href: "/dashboard/reportes",
+    icon: FileText,
+    description: "Informes y estadísticas",
+  },
 ];
 
 const analyticsNavigation = [
-  { name: "Tendencias", href: "/dashboard/analytics/trends", icon: TrendingUp, description: "Tendencias de calificaciones" },
-  { name: "Rendimiento", href: "/dashboard/analytics/performance", icon: BarChart3, description: "Rendimiento por curso" },
-  { name: "Distribución", href: "/dashboard/analytics/distribution", icon: ClipboardList, description: "Distribución de calificaciones" },
-  { name: "Progreso", href: "/dashboard/analytics/progress", icon: Users, description: "Progreso individual" },
+  {
+    name: "Tendencias",
+    href: "/dashboard/analytics/trends",
+    icon: TrendingUp,
+    description: "Tendencias de calificaciones",
+  },
+  {
+    name: "Rendimiento",
+    href: "/dashboard/analytics/performance",
+    icon: BarChart3,
+    description: "Rendimiento por curso",
+  },
+  {
+    name: "Distribución",
+    href: "/dashboard/analytics/distribution",
+    icon: ClipboardList,
+    description: "Distribución de calificaciones",
+  },
+  {
+    name: "Progreso",
+    href: "/dashboard/analytics/progress",
+    icon: Users,
+    description: "Progreso individual",
+  },
 ];
 
 interface DashboardLayoutProps {
@@ -70,8 +125,8 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
     };
 
     handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   if (!isMounted) {
@@ -104,7 +159,7 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
             >
               <Bell className="h-4 w-4" />
               {/* Badge de notificaciones sin leer */}
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-400 rounded-full flex items-center justify-center">
+              <div className="absolute -top-1 -right-1 w-5 h-5 bg-orange-400 rounded-full flex items-center justify-center">
                 <span className="text-xs font-bold text-white">3</span>
               </div>
             </Button>
@@ -123,7 +178,9 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
                   {/* Header */}
                   <div className="p-4 border-b border-zinc-800">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-zinc-100">Notificaciones</h3>
+                      <h3 className="text-sm font-semibold text-zinc-100">
+                        Notificaciones
+                      </h3>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -143,9 +200,15 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
                         <div className="flex items-start space-x-3">
                           <div className="w-2 h-2 bg-orange-400 rounded-full mt-2 flex-shrink-0"></div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-zinc-100">Nueva calificación registrada</p>
-                            <p className="text-xs text-zinc-400 mt-1">Ana García obtuvo 9.5 en Matemáticas</p>
-                            <p className="text-xs text-zinc-500 mt-1">Hace 5 minutos</p>
+                            <p className="text-sm font-medium text-zinc-100">
+                              Nueva calificación registrada
+                            </p>
+                            <p className="text-xs text-zinc-400 mt-1">
+                              Ana García obtuvo 9.5 en Matemáticas
+                            </p>
+                            <p className="text-xs text-zinc-500 mt-1">
+                              Hace 5 minutos
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -155,9 +218,15 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
                         <div className="flex items-start space-x-3">
                           <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-zinc-100">Nuevo estudiante matriculado</p>
-                            <p className="text-xs text-zinc-400 mt-1">Carlos López se unió al curso 5to A</p>
-                            <p className="text-xs text-zinc-500 mt-1">Hace 1 hora</p>
+                            <p className="text-sm font-medium text-zinc-100">
+                              Nuevo estudiante matriculado
+                            </p>
+                            <p className="text-xs text-zinc-400 mt-1">
+                              Carlos López se unió al curso 5to A
+                            </p>
+                            <p className="text-xs text-zinc-500 mt-1">
+                              Hace 1 hora
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -167,9 +236,15 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
                         <div className="flex items-start space-x-3">
                           <div className="w-2 h-2 bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-zinc-100">Reporte mensual generado</p>
-                            <p className="text-xs text-zinc-400 mt-1">Informe de rendimiento académico disponible</p>
-                            <p className="text-xs text-zinc-500 mt-1">Hace 2 horas</p>
+                            <p className="text-sm font-medium text-zinc-100">
+                              Reporte mensual generado
+                            </p>
+                            <p className="text-xs text-zinc-400 mt-1">
+                              Informe de rendimiento académico disponible
+                            </p>
+                            <p className="text-xs text-zinc-500 mt-1">
+                              Hace 2 horas
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -196,16 +271,15 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
       </div>
 
       <div className="h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4.5rem)] flex flex-col lg:grid lg:grid-cols-12 lg:grid-rows-12 gap-2 sm:gap-4">
-
         {/* Sidebar Izquierdo */}
         {sidebarOpen && (
           <>
             <div
-              className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+              className="fixed inset-0 bg-zinc-900/50 z-40 lg:hidden"
               onClick={() => setSidebarOpen(false)}
             />
 
-            <div className="fixed left-2 top-2 bottom-2 w-80 max-w-[calc(100vw-1rem)] bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-800 flex flex-col overflow-hidden z-50 lg:static lg:col-span-3 lg:row-span-11 lg:w-auto lg:max-w-none">
+            <div className="fixed left-2 top-2 bottom-2 w-80 max-w-[calc(100vw-1rem)] bg-zinc-900/30 backdrop-blur-sm rounded-2xl shadow-2xl border border-zinc-800 flex flex-col overflow-hidden z-50 lg:static lg:col-span-3 lg:row-span-11 lg:w-auto lg:max-w-none">
               <div className="p-4 sm:p-6 border-b border-zinc-700">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -213,8 +287,12 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
                       <GraduationCap className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                     </div>
                     <div>
-                      <h2 className="text-base sm:text-lg font-semibold text-zinc-100">Gestión Escolar</h2>
-                      <p className="text-xs sm:text-sm text-zinc-400">Sistema académico</p>
+                      <h2 className="text-base sm:text-lg font-semibold text-zinc-100">
+                        Gestión Escolar
+                      </h2>
+                      <p className="text-xs sm:text-sm text-zinc-400">
+                        Sistema académico
+                      </p>
                     </div>
                   </div>
                   <Button
@@ -233,7 +311,9 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
                   {/* Navegación Principal */}
                   <div className="space-y-2">
                     {navigation.map((item) => {
-                      const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                      const isActive =
+                        pathname === item.href ||
+                        pathname.startsWith(`${item.href}/`);
                       const Icon = item.icon;
 
                       return (
@@ -246,53 +326,21 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
                                 : "text-zinc-300 hover:bg-zinc-700/50 hover:text-zinc-100"
                             )}
                           >
-                            <Icon className={cn(
-                              "h-5 w-5 mr-3 flex-shrink-0",
-                              isActive ? "text-orange-400" : "text-zinc-500 group-hover:text-zinc-300"
-                            )} />
+                            <Icon
+                              className={cn(
+                                "h-5 w-5 mr-3 flex-shrink-0",
+                                isActive
+                                  ? "text-orange-400"
+                                  : "text-zinc-500 group-hover:text-zinc-300"
+                              )}
+                            />
                             <span className="font-medium">{item.name}</span>
                             {isActive && (
                               <div className="ml-auto w-2 h-2 bg-orange-400 rounded-full"></div>
                             )}
                           </div>
                         </Link>
-                      )
-                    })}
-                  </div>
-
-                  {/* Separador */}
-                  <div className="border-t border-zinc-700"></div>
-
-                  {/* Grupo Analytics */}
-                  <div className="space-y-2">
-                    <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-4">
-                      Analytics
-                    </h3>
-                    {analyticsNavigation.map((item) => {
-                      const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
-                      const Icon = item.icon;
-
-                      return (
-                        <Link key={item.href} href={item.href}>
-                          <div
-                            className={cn(
-                              "flex items-center px-4 py-2.5 text-sm rounded-xl transition-all duration-200 group",
-                              isActive
-                                ? "bg-orange-500/10 text-orange-400 shadow-sm border border-orange-500/20"
-                                : "text-zinc-400 hover:bg-zinc-700/50 hover:text-zinc-200"
-                            )}
-                          >
-                            <Icon className={cn(
-                              "h-4 w-4 mr-3 flex-shrink-0",
-                              isActive ? "text-orange-400" : "text-zinc-500 group-hover:text-zinc-400"
-                            )} />
-                            <span className="font-medium">{item.name}</span>
-                            {isActive && (
-                              <div className="ml-auto w-2 h-2 bg-orange-400 rounded-full"></div>
-                            )}
-                          </div>
-                        </Link>
-                      )
+                      );
                     })}
                   </div>
                 </div>
@@ -300,11 +348,19 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
 
               <div className="border-t border-zinc-700 p-4">
                 <div className="grid grid-cols-2 gap-2">
-                  <Button variant="ghost" size="sm" className="h-10 text-xs justify-start text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-10 text-xs justify-start text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700"
+                  >
                     <Terminal className="h-4 w-4 mr-2" />
                     Terminal
                   </Button>
-                  <Button variant="ghost" size="sm" className="h-10 text-xs justify-start text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-10 text-xs justify-start text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700"
+                  >
                     <Settings className="h-4 w-4 mr-2" />
                     Config
                   </Button>
@@ -315,13 +371,15 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
         )}
 
         {/* Contenido Principal */}
-        <div className={cn(
-          "flex-1 lg:row-span-11 bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-800 flex flex-col overflow-hidden",
-          "lg:col-span-12",
-          sidebarOpen && rightPanelOpen && "lg:col-span-6",
-          (sidebarOpen && !rightPanelOpen) && "lg:col-span-9",
-          (!sidebarOpen && rightPanelOpen) && "lg:col-span-9"
-        )}>
+        <div
+          className={cn(
+            "flex-1 lg:row-span-11 bg-zinc-900/30 rounded-2xl shadow-2xl border border-zinc-800 flex flex-col overflow-hidden",
+            "lg:col-span-12",
+            sidebarOpen && rightPanelOpen && "lg:col-span-6",
+            sidebarOpen && !rightPanelOpen && "lg:col-span-9",
+            !sidebarOpen && rightPanelOpen && "lg:col-span-9"
+          )}
+        >
           <div className="p-4 sm:p-6 border-b border-zinc-800">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2 sm:space-x-4">
@@ -336,15 +394,17 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
                 <div>
                   <h1 className="text-lg sm:text-2xl font-bold text-zinc-100">
                     {navigation.find(
-                      (item) => pathname === item.href || pathname.startsWith(`${item.href}/`)
+                      (item) =>
+                        pathname === item.href ||
+                        pathname.startsWith(`${item.href}/`)
                     )?.name || "Dashboard"}
                   </h1>
                   <p className="text-xs sm:text-sm text-zinc-400 mt-1 hidden sm:block">
-                    {new Date().toLocaleDateString('es-ES', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
+                    {new Date().toLocaleDateString("es-ES", {
+                      weekday: "long",
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
                     })}
                   </p>
                 </div>
@@ -355,94 +415,122 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-zinc-500" />
                   <Input
                     placeholder="Buscar..."
-                    className="w-48 lg:w-64 pl-10 bg-zinc-700 border-zinc-600 text-zinc-200 placeholder:text-zinc-500 focus:border-orange-400"
+                    className="w-48 lg:w-64 pl-10 bg-zinc-900/30  border-zinc-600 text-zinc-200 placeholder:text-zinc-500 focus:border-none focus:ring-0"
                   />
                 </div>
 
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-10 w-10 p-0 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700 sm:hidden"
+                  className="h-10 w-10 p-0 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/30 sm:hidden"
                 >
                   <Search className="h-5 w-5" />
                 </Button>
-
-                <UserProfileButton />
               </div>
             </div>
           </div>
 
-          <main className="flex-1 overflow-auto p-4 sm:p-6">
-            {children}
-          </main>
+          <main className="flex-1 overflow-auto p-4 sm:p-6">{children}</main>
         </div>
-
-
 
         {/* Panel Derecho */}
         {rightPanelOpen && (
-          <div className="col-span-3 row-span-11 bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-800 flex flex-col overflow-hidden hidden lg:flex">
-            <div className="p-6 border-b border-zinc-800">
+          <div className="col-span-3 row-span-11 bg-zinc-900/30 rounded-2xl shadow-2xl border border-zinc-800 flex flex-col overflow-hidden lg:flex">
+            <div className="p-4 border-b border-zinc-800">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-zinc-100">Actividad</h3>
+                <h3 className="text-lg font-semibold text-zinc-100">
+                  Análisis
+                </h3>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setRightPanelOpen(false)}
-                  className="h-8 w-8 p-0 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700"
+                  className="h-8 w-8 p-0 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/30"
                 >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-4">
               <div className="space-y-6">
-                <div>
-                  <h4 className="text-sm font-medium text-zinc-100 mb-3 flex items-center">
-                    <Bell className="h-4 w-4 mr-2 text-orange-400" />
-                    Notificaciones
-                  </h4>
-                  <div className="space-y-3">
-                    <div className="p-3 bg-orange-500/10 rounded-lg border border-orange-500/20">
-                      <div className="flex items-start space-x-3">
-                        <div className="w-2 h-2 bg-orange-400 rounded-full mt-2"></div>
-                        <div>
-                          <p className="text-sm font-medium text-zinc-100">Nueva calificación</p>
-                          <p className="text-xs text-zinc-400">Ana García - Matemáticas: 9.5</p>
-                          <p className="text-xs text-zinc-500 mt-1">Hace 5 minutos</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
-                      <div className="flex items-start space-x-3">
-                        <div className="w-2 h-2 bg-blue-400 rounded-full mt-2"></div>
-                        <div>
-                          <p className="text-sm font-medium text-zinc-100">Nuevo estudiante</p>
-                          <p className="text-xs text-zinc-400">Carlos López se unió al curso 5to A</p>
-                          <p className="text-xs text-zinc-500 mt-1">Hace 1 hora</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                {analyticsNavigation.map((item) => {
+                  const isActive =
+                    pathname === item.href ||
+                    pathname.startsWith(`${item.href}/`);
+                  const Icon = item.icon;
 
-                <div>
-                  <h4 className="text-sm font-medium text-zinc-100 mb-3 flex items-center">
-                    <TrendingUp className="h-4 w-4 mr-2 text-orange-400" />
-                    Resumen Rápido
+                  return (
+                    <Link key={item.href} href={item.href}>
+                      <div
+                        className={cn(
+                          "flex items-center p-4 rounded-xl transition-all duration-200 group mb-2",
+                          isActive
+                            ? "bg-orange-500/10 text-orange-400 shadow-sm border border-orange-500/20"
+                            : "bg-zinc-900/30 text-zinc-300 hover:bg-zinc-900/50 hover:text-zinc-100"
+                        )}
+                      >
+                        <div className="p-2 bg-zinc-700/50 rounded-lg mr-3">
+                          <Icon
+                            className={cn(
+                              "h-5 w-5",
+                              isActive
+                                ? "text-orange-400"
+                                : "text-zinc-400 group-hover:text-zinc-200"
+                            )}
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{item.name}</p>
+                          <p className="text-xs text-zinc-400">
+                            {item.description}
+                          </p>
+                        </div>
+                        {isActive && (
+                          <div className="w-2 h-2 bg-orange-400 rounded-full ml-2"></div>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })}
+                {/* Estadísticas rápidas */}
+                {/* <div className="mt-8">
+                  <h4 className="text-sm font-medium text-zinc-100 px-2">
+                    Estadísticas Rápidas
                   </h4>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-zinc-700/50 rounded-lg border border-zinc-600">
-                      <span className="text-sm text-zinc-300">Estudiantes activos</span>
-                      <span className="text-sm font-semibold text-zinc-100">245</span>
+                    <div className="p-3 bg-zinc-900/50 rounded-xl border border-zinc-700">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-zinc-300">
+                          Cursos Activos
+                        </span>
+                        <span className="text-sm font-semibold text-orange-400">
+                          12
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-zinc-700/50 rounded-lg border border-zinc-600">
-                      <span className="text-sm text-zinc-300">Promedio general</span>
-                      <span className="text-sm font-semibold text-orange-400">7.8</span>
+                    <div className="p-3 bg-zinc-900/50 rounded-xl border border-zinc-700">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-zinc-300">
+                          Promedio General
+                        </span>
+                        <span className="text-sm font-semibold text-green-400">
+                          7.8
+                        </span>
+                      </div>
+                    </div>
+                    <div className="p-3 bg-zinc-900/50 rounded-xl border border-zinc-700">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-zinc-300">
+                          Asistencia Promedio
+                        </span>
+                        <span className="text-sm font-semibold text-blue-400">
+                          92%
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
