@@ -98,14 +98,51 @@ export function CoursesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="space-y-4">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Cursos
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              Gestiona todos los cursos del sistema
+            </p>
+          </div>
+          {canManage && (
+            <Button asChild>
+              <Link href="/dashboard/cursos/nuevo">
+                <Plus className="h-4 w-4 mr-2" />
+                Nuevo Curso
+              </Link>
+            </Button>
+          )}
+        </div>
+
+        {/* Barra de búsqueda */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Input
+            type="search"
+            placeholder="Buscar cursos..."
+            className="pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+
+        <div className="flex items-center justify-center py-16">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Cargando cursos...</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -113,7 +150,7 @@ export function CoursesPage() {
             Cursos
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Gestiona todos los cursos del sistema educativo
+            Gestiona todos los cursos del sistema
           </p>
         </div>
         {canManage && (
@@ -128,17 +165,17 @@ export function CoursesPage() {
 
       {/* Barra de búsqueda */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
         <Input
+          type="search"
           placeholder="Buscar cursos..."
+          className="pl-10"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
         />
       </div>
 
-      {/* Lista de cursos */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filteredCourses.map((course) => (
           <Card key={course.id} className="hover:shadow-md transition-shadow">
             <CardHeader>
@@ -150,31 +187,43 @@ export function CoursesPage() {
                   <div>
                     <CardTitle className="text-lg">{course.name}</CardTitle>
                     {course.year && (
-                      <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full">
-                        {course.year}
+                      <span className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full">
+                        Año {course.year}
                       </span>
                     )}
                   </div>
                 </div>
               </div>
-              <CardDescription className="flex items-center mt-2">
-                <School className="h-4 w-4 mr-1" />
-                {course.institution.name}
-              </CardDescription>
-              {course.description && (
-                <CardDescription className="mt-1">
-                  {course.description}
+              {course.institution?.name && (
+                <CardDescription className="flex items-center mt-2">
+                  <School className="h-4 w-4 mr-1" />
+                  {course.institution.name}
                 </CardDescription>
               )}
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-2">
-                  <Users className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    {course.student_count}{" "}
-                    {course.student_count === 1 ? "alumno" : "alumnos"}
-                  </span>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="text-center">
+                  <div className="flex items-center justify-center mb-1">
+                    <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {course.student_count || 0}
+                  </div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400">
+                    Estudiantes
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center mb-1">
+                    <BookOpen className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                    0
+                  </div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400">
+                    Asignaturas
+                  </div>
                 </div>
               </div>
               <Button asChild className="w-full">
@@ -189,22 +238,24 @@ export function CoursesPage() {
 
       {filteredCourses.length === 0 && !loading && (
         <div className="text-center py-12">
-          <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+          <BookOpen className="h-12 w-12 mx-auto text-gray-400" />
+          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
             No se encontraron cursos
           </h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             {searchTerm
-              ? "Intenta con otros términos de búsqueda"
-              : "Comienza agregando tu primer curso"}
+              ? "No hay cursos que coincidan con tu búsqueda."
+              : "Aún no hay cursos registrados en el sistema."}
           </p>
-          {canManage && (
-            <Button asChild>
-              <Link href="/dashboard/cursos/nuevo">
-                <Plus className="h-4 w-4 mr-2" />
-                Nuevo Curso
-              </Link>
-            </Button>
+          {canManage && !searchTerm && (
+            <div className="mt-6">
+              <Button asChild>
+                <Link href="/dashboard/cursos/nuevo">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Crear Curso
+                </Link>
+              </Button>
+            </div>
           )}
         </div>
       )}

@@ -83,16 +83,8 @@ export function InstitutionsPage() {
         institution.address.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -115,92 +107,103 @@ export function InstitutionsPage() {
 
       {/* Barra de búsqueda */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
         <Input
+          type="search"
           placeholder="Buscar instituciones..."
+          className="pl-10"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
         />
       </div>
 
-      {/* Lista de instituciones */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredInstitutions.map((institution) => (
-          <Card
-            key={institution.id}
-            className="hover:shadow-md transition-shadow"
-          >
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="bg-primary/10 p-2 rounded-full">
-                    <School className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">
-                      {institution.name}
-                    </CardTitle>
-                    {institution.type && (
-                      <span className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full capitalize">
-                        {institution.type}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-              {institution.address && (
-                <CardDescription className="flex items-center mt-2">
-                  <MapPin className="h-4 w-4 mr-1" />
-                  {institution.address}
-                </CardDescription>
-              )}
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                <div className="text-center">
-                  <div className="flex items-center justify-center mb-1">
-                    <BookOpen className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                    0
-                  </div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">
-                    Cursos
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">
+              Cargando instituciones...
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {filteredInstitutions.map((institution) => (
+            <Card
+              key={institution.id}
+              className="hover:shadow-md transition-shadow"
+            >
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="bg-primary/10 p-2 rounded-full">
+                      <School className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">
+                        {institution.name}
+                      </CardTitle>
+                      {institution.type && (
+                        <span className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full capitalize">
+                          {institution.type}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <div className="text-center">
-                  <div className="flex items-center justify-center mb-1">
-                    <Users className="h-4 w-4 text-green-600 dark:text-green-400" />
+                {institution.address && (
+                  <CardDescription className="flex items-center mt-2">
+                    <MapPin className="h-4 w-4 mr-1" />
+                    {institution.address}
+                  </CardDescription>
+                )}
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-1">
+                      <BookOpen className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                      0
+                    </div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      Cursos
+                    </div>
                   </div>
-                  <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                    0
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-1">
+                      <Users className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                      0
+                    </div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      Profesores
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">
-                    Profesores
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-1">
+                      <Users className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                    </div>
+                    <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                      0
+                    </div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      Alumnos
+                    </div>
                   </div>
                 </div>
-                <div className="text-center">
-                  <div className="flex items-center justify-center mb-1">
-                    <Users className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                  </div>
-                  <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                    0
-                  </div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">
-                    Alumnos
-                  </div>
-                </div>
-              </div>
-              <Button asChild className="w-full">
-                <Link href={`/dashboard/instituciones/${institution.id}`}>
-                  Ver Detalles
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                <Button asChild className="w-full">
+                  <Link href={`/dashboard/instituciones/${institution.id}`}>
+                    Ver Detalles
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {filteredInstitutions.length === 0 && !loading && (
         <div className="text-center py-12">
