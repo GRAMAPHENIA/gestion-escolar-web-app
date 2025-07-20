@@ -256,9 +256,9 @@ export function DashboardOverview() {
   return (
     <div className="flex flex-col overflow-hidden">
       {/* Contenido scrolleable */}
-      <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 pr-2 bg-zinc-950/50">
+      <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 pr-2">
         {/* Encabezado - Compacto */}
-        <div className="flex flex-col justify-between space-y-2 sm:space-y-4 md:flex-row md:items-center md:space-y-0 flex-shrink-0 bg-zinc-950/30 p-4 rounded-xl">
+        <div className="flex flex-col justify-between space-y-2 sm:space-y-4 md:flex-row md:items-center md:space-y-0 flex-shrink-0 p-4 rounded-xl">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-100">
               Hola, {user?.firstName || "Usuario"}

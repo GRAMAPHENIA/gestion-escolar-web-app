@@ -493,51 +493,13 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
                     </Link>
                   );
                 })}
-                {/* Estadísticas rápidas */}
-                {/* <div className="mt-8">
-                  <h4 className="text-sm font-medium text-zinc-100 px-2">
-                    Estadísticas Rápidas
-                  </h4>
-                  <div className="space-y-3">
-                    <div className="p-3 bg-zinc-900/50 rounded-xl border border-zinc-700">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-zinc-300">
-                          Cursos Activos
-                        </span>
-                        <span className="text-sm font-semibold text-orange-400">
-                          12
-                        </span>
-                      </div>
-                    </div>
-                    <div className="p-3 bg-zinc-900/50 rounded-xl border border-zinc-700">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-zinc-300">
-                          Promedio General
-                        </span>
-                        <span className="text-sm font-semibold text-green-400">
-                          7.8
-                        </span>
-                      </div>
-                    </div>
-                    <div className="p-3 bg-zinc-900/50 rounded-xl border border-zinc-700">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-zinc-300">
-                          Asistencia Promedio
-                        </span>
-                        <span className="text-sm font-semibold text-blue-400">
-                          92%
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div> */}
               </div>
             </div>
           </div>
         )}
 
         {/* Footer Minimalista - Solo estadísticas */}
-        <div className="col-span-12 row-span-1 flex items-center justify-center px-6">
+        <div className="col-span-12 row-span-1 flex items-center justify-end px-6">
           <div className="flex items-center space-x-6 text-zinc-500">
             <div
               className="flex items-center space-x-1.5 hover:text-zinc-400 transition-colors cursor-help"
