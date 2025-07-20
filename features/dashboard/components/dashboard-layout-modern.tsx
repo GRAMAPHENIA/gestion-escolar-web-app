@@ -135,7 +135,7 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen bg-zinc-950 p-2 sm:p-4">
-      {/* Navbar Superior - Simplificado */}
+      {/* Navbar Superior */}
       <div className="h-10 flex items-center justify-end px-4 mb-2 sm:mb-3">
         <div className="flex items-center space-x-3">
           <Button
@@ -278,8 +278,7 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
               className="fixed inset-0 bg-zinc-900/50 z-40 lg:hidden"
               onClick={() => setSidebarOpen(false)}
             />
-
-            <div className="fixed left-2 top-2 bottom-2 w-80 max-w-[calc(100vw-1rem)] bg-zinc-900/30 backdrop-blur-sm rounded-2xl shadow-2xl border border-zinc-800 flex flex-col overflow-hidden z-50 lg:static lg:col-span-3 lg:row-span-11 lg:w-auto lg:max-w-none">
+            <div className="fixed left-2 top-14 bottom-2 w-80 max-w-[calc(100vw-1rem)] bg-zinc-900/30 backdrop-blur-sm rounded-2xl shadow-2xl border border-zinc-800 flex flex-col overflow-hidden z-50 lg:static lg:col-span-3 lg:row-span-11 lg:w-auto lg:max-w-none lg:flex">
               <div className="p-4 sm:p-6 border-b border-zinc-700">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -498,7 +497,7 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
           </div>
         )}
 
-        {/* Footer Minimalista - Solo estadísticas */}
+        {/* Footer */}
         <div className="col-span-12 row-span-1 flex items-center justify-end px-6">
           <div className="flex items-center space-x-6 text-zinc-500">
             <div
