@@ -138,12 +138,12 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
     <div className="min-h-screen bg-zinc-950 p-2 sm:p-4">
       {/* Navbar Superior */}
       <div className="h-7 flex items-center justify-end px-4 mb-2 sm:mb-3">
-        <div className="flex items-center space-x-4 sm:space-x-6">
+        <div className="flex items-center space-x-4 sm:space-x-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setRightPanelOpen(!rightPanelOpen)}
-            className="h-7 w-7 p-0 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700 hidden lg:flex"
+            className="h-8 w-8 p-4 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 hidden lg:flex"
             title="Toggle Panel de Actividad"
           >
             <Activity className="h-4 w-4" />
@@ -155,7 +155,7 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
               variant="ghost"
               size="sm"
               onClick={() => setNotificationsOpen(!notificationsOpen)}
-              className="h-8 w-8 p-0 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 relative"
+              className="h-8 w-8 p-0 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 mr-2 relative"
               title="Notificaciones"
             >
               <Bell className="h-4 w-4" />
