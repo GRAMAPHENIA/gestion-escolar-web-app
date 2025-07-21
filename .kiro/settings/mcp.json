@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "command": "python",
+      "args": ["-m", "mcp_server_supabase"],
+      "env": {
+        "SUPABASE_URL": "${NEXT_PUBLIC_SUPABASE_URL}",
+        "SUPABASE_ANON_KEY": "${NEXT_PUBLIC_SUPABASE_ANON_KEY}",
+        "FASTMCP_LOG_LEVEL": "INFO"
+      },
+      "disabled": true,
+      "autoApprove": [
+        "supabase_query",
+        "supabase_insert",
+        "supabase_update",
+        "supabase_delete",
+        "supabase_get_schema",
+        "supabase_create_table",
+        "supabase_get_table_info"
+      ]
+    }
+  }
+}

@@ -142,7 +142,7 @@ export function DashboardLayoutModern({ children }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 p-2 sm:p-4">
+    <div className="min-h-screen bg-zinc-950 p-2 sm:p-2">
       {/* Navbar Superior */}
       <div className="h-7 flex items-center justify-end px-4 mb-2 sm:mb-3">
         <div className="flex items-center space-x-4">

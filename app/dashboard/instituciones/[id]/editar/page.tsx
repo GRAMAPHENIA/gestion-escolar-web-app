@@ -3,10 +3,10 @@ import { ArrowLeft, Building2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { InstitutionForm } from "@/components/forms/institution-form";
+import { InstitutionEditPage } from "@/features/institutions/components/institution-edit-page";
 
-// Componente de carga para el formulario
-function FormSkeleton() {
+// Componente de carga para el formulario de edición
+function EditFormSkeleton() {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="space-y-6 p-6 border rounded-lg">
@@ -37,15 +37,21 @@ function FormSkeleton() {
   );
 }
 
-export default function NuevaInstitucionPage() {
+interface Props {
+  params: Promise<{ id: string }>;
+}
+
+export default async function EditarInstitucionPage({ params }: Props) {
+  const { id } = await params;
+
   return (
     <div className="space-y-6">
       {/* Breadcrumb y Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/dashboard/instituciones">
+          <Link href={`/dashboard/instituciones/${id}`}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Volver a Instituciones
+            Volver al Detalle
           </Link>
         </Button>
       </div>
@@ -56,17 +62,17 @@ export default function NuevaInstitucionPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Nueva Institución
+            Editar Institución
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Crea una nueva institución educativa en el sistema
+            Modifica los datos de la institución educativa
           </p>
         </div>
       </div>
 
-      {/* Formulario */}
-      <Suspense fallback={<FormSkeleton />}>
-        <InstitutionForm />
+      {/* Componente de edición */}
+      <Suspense fallback={<EditFormSkeleton />}>
+        <InstitutionEditPage institutionId={id} />
       </Suspense>
     </div>
   );

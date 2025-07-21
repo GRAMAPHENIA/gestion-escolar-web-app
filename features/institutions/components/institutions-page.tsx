@@ -1,90 +1,178 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Plus,
-  Search,
-  School,
-  Users,
-  BookOpen,
-  MapPin,
-  Loader2,
-} from "lucide-react";
+import { Plus, School, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase-updated";
 import { useUser } from "@clerk/nextjs";
-
-interface Institution {
-  id: string;
-  name: string;
-  address: string | null;
-  phone: string | null;
-  email: string | null;
-  type: string | null;
-  created_at: string;
-}
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { 
+  InstitutionSearch, 
+  InstitutionFilters, 
+  InstitutionList,
+  InstitutionExportCompact 
+} from "@/features/institutions/components";
+import { useInstitutionSearch } from "@/features/institutions/hooks/use-institution-search";
+import { exportInstitutions } from "@/features/institutions/utils/institution-export";
+import { Institution, InstitutionExportOptions, InstitutionListResponse } from "@/features/institutions/types";
 
 export function InstitutionsPage() {
   const { user } = useUser();
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [canManage, setCanManage] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [canManage, setCanManage] = useState(true); // Temporal para desarrollo
+  const [totalCount, setTotalCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+
+  const {
+    filters,
+    debouncedSearch,
+    isSearching,
+    page,
+    setSearch,
+    setDateRange,
+    setSorting,
+    clearFilters,
+    setPage,
+    hasActiveFilters,
+    getActiveFiltersCount,
+  } = useInstitutionSearch();
 
   useEffect(() => {
     if (user) {
-      loadInstitutions();
       checkPermissions();
     }
   }, [user]);
 
+  // Cargar instituciones cuando cambien los filtros o la página
+  useEffect(() => {
+    if (user) {
+      loadInstitutions();
+    }
+  }, [user, debouncedSearch, filters.dateRange, filters.sortBy, filters.sortOrder, page]);
+
+  const checkPermissions = async () => {
+    if (!user) return;
+
+    try {
+      const response = await fetch('/api/auth/permissions');
+      if (response.ok) {
+        const data = await response.json();
+        setCanManage(data.canManage || false);
+      }
+    } catch (error) {
+      console.error('Error checking permissions:', error);
+      // Por defecto, asumir que puede gestionar si es admin
+      setCanManage(true);
+    }
+  };
+
   const loadInstitutions = async () => {
     try {
-      const { data, error } = await supabase
-        .from("institutions")
-        .select("*")
-        .order("created_at", { ascending: false });
+      setLoading(true);
+      setError(null);
 
-      if (error) throw error;
-      setInstitutions(data || []);
+      // Construir parámetros de consulta
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: '12',
+        sortBy: filters.sortBy,
+        sortOrder: filters.sortOrder,
+      });
+
+      if (debouncedSearch) {
+        params.append('search', debouncedSearch);
+      }
+
+      if (filters.dateRange.from) {
+        params.append('dateFrom', filters.dateRange.from.toISOString());
+      }
+
+      if (filters.dateRange.to) {
+        params.append('dateTo', filters.dateRange.to.toISOString());
+      }
+
+      const response = await fetch(`/api/institutions?${params}`);
+      
+      if (!response.ok) {
+        throw new Error('Error al cargar las instituciones');
+      }
+
+      const result: InstitutionListResponse = await response.json();
+      
+      setInstitutions(result.institutions);
+      setTotalCount(result.total);
+      setCurrentPage(result.page);
+      setHasMore(result.hasMore);
+
     } catch (error) {
-      console.error("Error loading institutions:", error || "Unknown error");
+      console.error('Error loading institutions:', error);
+      setError(error instanceof Error ? error.message : 'Error desconocido');
       setInstitutions([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const checkPermissions = async () => {
-    if (!user) return;
-
-    const { data: userData } = await supabase
-      .from("users")
-      .select("role")
-      .eq("clerk_id", user.id)
-      .single();
-
-    setCanManage(userData?.role === "admin" || userData?.role === "director");
+  const handleFiltersChange = (newFilters: typeof filters) => {
+    if (newFilters.dateRange !== filters.dateRange) {
+      setDateRange(newFilters.dateRange);
+    }
+    if (newFilters.sortBy !== filters.sortBy || newFilters.sortOrder !== filters.sortOrder) {
+      setSorting(newFilters.sortBy, newFilters.sortOrder);
+    }
   };
 
-  const filteredInstitutions = institutions.filter(
-    (institution) =>
-      institution.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (institution.address &&
-        institution.address.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const handleSearch = (searchTerm: string) => {
+    setSearch(searchTerm);
+  };
+
+  const handleExport = async (options: InstitutionExportOptions) => {
+    try {
+      // Obtener datos para exportación
+      const response = await fetch('/api/institutions/export', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ options }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al obtener datos para exportación');
+      }
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.message || 'Error en la exportación');
+      }
+
+      // Ejecutar la exportación
+      await exportInstitutions(
+        result.data.institutions, 
+        options, 
+        result.data.stats
+      );
+      
+      toast.success(`Archivo ${options.format.toUpperCase()} descargado exitosamente`);
+      
+    } catch (error) {
+      console.error('Error en exportación:', error);
+      toast.error('Error al generar el archivo de exportación');
+      throw error;
+    }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -95,127 +183,14 @@ export function InstitutionsPage() {
             Gestiona todas las instituciones educativas del sistema
           </p>
         </div>
-        {canManage && (
-          <Button asChild>
-            <Link href="/dashboard/instituciones/nueva">
-              <Plus className="h-4 w-4 mr-2" />
-              Nueva Institución
-            </Link>
-          </Button>
-        )}
-      </div>
-
-      {/* Barra de búsqueda */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-        <Input
-          type="search"
-          placeholder="Buscar instituciones..."
-          className="pl-10"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
-
-      {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">
-              Cargando instituciones...
-            </p>
-          </div>
-        </div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredInstitutions.map((institution) => (
-            <Card
-              key={institution.id}
-              className="hover:shadow-md transition-shadow"
-            >
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="bg-primary/10 p-2 rounded-full">
-                      <School className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">
-                        {institution.name}
-                      </CardTitle>
-                      {institution.type && (
-                        <span className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full capitalize">
-                          {institution.type}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                {institution.address && (
-                  <CardDescription className="flex items-center mt-2">
-                    <MapPin className="h-4 w-4 mr-1" />
-                    {institution.address}
-                  </CardDescription>
-                )}
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-3 gap-4 mb-4">
-                  <div className="text-center">
-                    <div className="flex items-center justify-center mb-1">
-                      <BookOpen className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                      0
-                    </div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400">
-                      Cursos
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="flex items-center justify-center mb-1">
-                      <Users className="h-4 w-4 text-green-600 dark:text-green-400" />
-                    </div>
-                    <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                      0
-                    </div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400">
-                      Profesores
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="flex items-center justify-center mb-1">
-                      <Users className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                    </div>
-                    <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                      0
-                    </div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400">
-                      Alumnos
-                    </div>
-                  </div>
-                </div>
-                <Button asChild className="w-full">
-                  <Link href={`/dashboard/instituciones/${institution.id}`}>
-                    Ver Detalles
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {filteredInstitutions.length === 0 && !loading && (
-        <div className="text-center py-12">
-          <School className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-            No se encontraron instituciones
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            {searchTerm
-              ? "Intenta con otros términos de búsqueda"
-              : "Comienza agregando tu primera institución"}
-          </p>
+        <div className="flex items-center gap-2">
+          {/* Exportación compacta */}
+          <InstitutionExportCompact
+            currentFilters={filters}
+            totalInstitutions={totalCount}
+            onExport={handleExport}
+          />
+          
           {canManage && (
             <Button asChild>
               <Link href="/dashboard/instituciones/nueva">
@@ -224,6 +199,101 @@ export function InstitutionsPage() {
               </Link>
             </Button>
           )}
+        </div>
+      </div>
+
+      {/* Búsqueda y Filtros */}
+      <div className="space-y-4">
+        <InstitutionSearch
+          value={filters.search}
+          onChange={setSearch}
+          onSearch={handleSearch}
+          isSearching={isSearching}
+          placeholder="Buscar instituciones por nombre..."
+        />
+        
+        <InstitutionFilters
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+          onClearFilters={clearFilters}
+          activeFiltersCount={getActiveFiltersCount()}
+        />
+      </div>
+
+      {/* Error State */}
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>
+            {error}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={loadInstitutions}
+              className="ml-2"
+            >
+              Reintentar
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center py-16">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">
+              Cargando instituciones...
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Lista de Instituciones */}
+      {!loading && !error && (
+        <InstitutionList
+          institutions={institutions}
+          loading={loading}
+          totalCount={totalCount}
+          currentPage={currentPage}
+          hasMore={hasMore}
+          onPageChange={handlePageChange}
+          emptyStateAction={
+            canManage ? (
+              <Button asChild>
+                <Link href="/dashboard/instituciones/nueva">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nueva Institución
+                </Link>
+              </Button>
+            ) : undefined
+          }
+        />
+      )}
+
+      {/* Estado vacío personalizado para búsquedas */}
+      {!loading && !error && institutions.length === 0 && hasActiveFilters && (
+        <div className="text-center py-12">
+          <School className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            No se encontraron instituciones
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            Intenta ajustar los filtros de búsqueda o crear una nueva institución.
+          </p>
+          <div className="flex justify-center gap-2">
+            <Button variant="outline" onClick={clearFilters}>
+              Limpiar filtros
+            </Button>
+            {canManage && (
+              <Button asChild>
+                <Link href="/dashboard/instituciones/nueva">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nueva Institución
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
       )}
     </div>
