@@ -13,6 +13,7 @@ import {
   InstitutionList,
   InstitutionExportCompact 
 } from "@/features/institutions/components";
+import { FirstAdminWelcome } from "./first-admin-welcome";
 import { useInstitutionSearch } from "@/features/institutions/hooks/use-institution-search";
 import { exportInstitutions } from "@/features/institutions/utils/institution-export";
 import { Institution, InstitutionExportOptions, InstitutionListResponse } from "@/features/institutions/types";
@@ -22,7 +23,9 @@ export function InstitutionsPage() {
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [canManage, setCanManage] = useState(true); // Temporal para desarrollo
+  const [canManage, setCanManage] = useState(false);
+  const [isFirstUser, setIsFirstUser] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
