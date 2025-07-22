@@ -219,7 +219,13 @@
 
     - _Requirements: 2.1, 2.6, 6.1_
 
-  - [ ] 8.2 Create new institution page
+  - [x] 8.2 Create new institution page
+
+
+
+
+
+
     - Build /app/dashboard/instituciones/nueva/page.tsx
 
 
@@ -231,7 +237,12 @@
 
 
 
-  - [ ] 8.3 Implement institution detail page
+  - [x] 8.3 Implement institution detail page
+
+
+
+
+
     - Create /app/dashboard/instituciones/[id]/page.tsx
     - Integrate InstitutionDetail component
     - Add edit and delete action buttons

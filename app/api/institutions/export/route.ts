@@ -1,7 +1,7 @@
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase-updated';
 import { InstitutionExportOptions, Institution, InstitutionStats } from '@/features/institutions/types';
 import { validateExportOptions } from '@/features/institutions/utils/institution-export';
 
@@ -24,8 +24,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Crear cliente de Supabase
-    const supabase = createClient();
+    // Usar cliente de Supabase importado
 
     // Construir consulta base
     let query = supabase.from('institutions').select('*');
@@ -152,8 +151,7 @@ export async function GET(request: NextRequest) {
     const format = searchParams.get('format') as 'excel' | 'pdf' || 'excel';
     const includeStats = searchParams.get('includeStats') === 'true';
     
-    // Crear cliente de Supabase
-    const supabase = createClient();
+    // Usar cliente de Supabase importado
     
     // Obtener conteo total de instituciones
     const { count, error } = await supabase
