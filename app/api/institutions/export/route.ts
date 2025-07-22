@@ -1,33 +1,25 @@
+'use server';
+
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase';
 import { InstitutionExportOptions, Institution, InstitutionStats } from '@/features/institutions/types';
 import { validateExportOptions } from '@/features/institutions/utils/institution-export';
 
+/**
+ * Endpoint para obtener datos de instituciones para exportación
+ * POST /api/institutions/export
+ */
 export async function POST(request: NextRequest) {
   try {
-    // Verificar autenticación
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, message: 'No autorizado' },
-        { status: 401 }
-      );
-    }
-
-    // Parsear el cuerpo de la solicitud
+    // Obtener opciones de exportación del cuerpo de la solicitud
     const body = await request.json();
-    const exportOptions: InstitutionExportOptions = body.options;
+    const options: InstitutionExportOptions = body.options;
 
-    // Validar opciones de exportación
-    const validationErrors = validateExportOptions(exportOptions);
+    // Validar opciones
+    const validationErrors = validateExportOptions(options);
     if (validationErrors.length > 0) {
       return NextResponse.json(
-        { 
-          success: false, 
-          message: 'Opciones de exportación inválidas',
-          errors: validationErrors 
-        },
+        { success: false, message: 'Opciones de exportación inválidas', errors: validationErrors },
         { status: 400 }
       );
     }
@@ -35,214 +27,180 @@ export async function POST(request: NextRequest) {
     // Crear cliente de Supabase
     const supabase = createClient();
 
-    // Construir query base
-    let query = supabase
-      .from('institutions')
-      .select('*');
+    // Construir consulta base
+    let query = supabase.from('institutions').select('*');
 
-    // Aplicar filtros de fecha si existen
-    if (exportOptions.dateRange?.from) {
-      query = query.gte('created_at', exportOptions.dateRange.from.toISOString());
+    // Aplicar filtros si existen
+    if (options.filters) {
+      // Filtro de búsqueda
+      if (options.filters.search) {
+        query = query.ilike('name', `%${options.filters.search}%`);
+      }
+
+      // Filtro de rango de fechas
+      if (options.dateRange?.from) {
+        query = query.gte('created_at', options.dateRange.from.toISOString());
+      }
+      if (options.dateRange?.to) {
+        // Ajustar la fecha final para incluir todo el día
+        const endDate = new Date(options.dateRange.to);
+        endDate.setHours(23, 59, 59, 999);
+        query = query.lte('created_at', endDate.toISOString());
+      }
+
+      // Ordenamiento
+      if (options.filters.sortBy && options.filters.sortOrder) {
+        query = query.order(options.filters.sortBy, {
+          ascending: options.filters.sortOrder === 'asc',
+        });
+      }
+    } else {
+      // Ordenamiento predeterminado
+      query = query.order('created_at', { ascending: false });
     }
-    
-    if (exportOptions.dateRange?.to) {
-      // Agregar un día completo para incluir el día seleccionado
-      const toDate = new Date(exportOptions.dateRange.to);
-      toDate.setHours(23, 59, 59, 999);
-      query = query.lte('created_at', toDate.toISOString());
-    }
 
-    // Aplicar filtros adicionales si existen
-    if (exportOptions.filters?.search) {
-      query = query.ilike('name', `%${exportOptions.filters.search}%`);
-    }
-
-    // Ordenar resultados
-    const sortBy = exportOptions.filters?.sortBy || 'created_at';
-    const sortOrder = exportOptions.filters?.sortOrder || 'desc';
-    query = query.order(sortBy, { ascending: sortOrder === 'asc' });
-
-    // Ejecutar query
+    // Ejecutar consulta
     const { data: institutions, error } = await query;
 
     if (error) {
-      console.error('Error al obtener instituciones para exportación:', error);
+      console.error('Error al obtener instituciones:', error);
       return NextResponse.json(
         { success: false, message: 'Error al obtener datos de instituciones' },
         { status: 500 }
       );
     }
 
-    if (!institutions || institutions.length === 0) {
-      return NextResponse.json(
-        { success: false, message: 'No se encontraron instituciones para exportar' },
-        { status: 404 }
-      );
-    }
-
-    // Obtener estadísticas si se requieren
-    let stats: Record<string, InstitutionStats> = {};
+    // Obtener estadísticas si se solicitan
+    let stats: Record<string, InstitutionStats> | undefined;
     
-    if (exportOptions.includeStats) {
-      try {
-        const institutionIds = institutions.map(inst => inst.id);
-        
-        // Obtener estadísticas para cada institución
-        for (const institutionId of institutionIds) {
-          // Obtener cursos
-          const { data: coursesData } = await supabase
-            .from('courses')
-            .select('id')
-            .eq('institution_id', institutionId);
-
-          const coursesCount = coursesData?.length || 0;
-
-          // Obtener estudiantes
-          let studentsCount = 0;
-          if (coursesCount > 0 && coursesData) {
-            const courseIds = coursesData.map(course => course.id);
-            const { data: studentsData } = await supabase
-              .from('students')
-              .select('id')
-              .in('course_id', courseIds);
-            
-            studentsCount = studentsData?.length || 0;
-          }
-
-          // Obtener profesores
-          const { data: professorsData } = await supabase
-            .from('professors')
-            .select('id')
-            .eq('institution_id', institutionId);
-
-          const professorsCount = professorsData?.length || 0;
-
-          stats[institutionId] = {
-            courses_count: coursesCount,
-            students_count: studentsCount,
-            professors_count: professorsCount,
-            recent_activity: [], // No incluir actividad en exportaciones
-          };
-        }
-      } catch (statsError) {
-        console.error('Error al obtener estadísticas:', statsError);
-        // Continuar sin estadísticas en caso de error
-        stats = {};
+    if (options.includeStats && institutions.length > 0) {
+      const institutionIds = institutions.map((inst: Institution) => inst.id);
+      
+      // Consulta para obtener estadísticas de cursos
+      const { data: coursesData, error: coursesError } = await supabase
+        .from('courses')
+        .select('institution_id, count')
+        .in('institution_id', institutionIds)
+        .group('institution_id');
+      
+      if (coursesError) {
+        console.error('Error al obtener estadísticas de cursos:', coursesError);
       }
+      
+      // Consulta para obtener estadísticas de estudiantes
+      const { data: studentsData, error: studentsError } = await supabase
+        .rpc('get_students_count_by_institution', { institution_ids: institutionIds });
+      
+      if (studentsError) {
+        console.error('Error al obtener estadísticas de estudiantes:', studentsError);
+      }
+      
+      // Consulta para obtener estadísticas de profesores
+      const { data: professorsData, error: professorsError } = await supabase
+        .from('professors')
+        .select('institution_id, count')
+        .in('institution_id', institutionIds)
+        .group('institution_id');
+      
+      if (professorsError) {
+        console.error('Error al obtener estadísticas de profesores:', professorsError);
+      }
+      
+      // Combinar estadísticas
+      stats = {};
+      
+      institutionIds.forEach(id => {
+        const coursesCount = coursesData?.find(item => item.institution_id === id)?.count || 0;
+        const studentsCount = studentsData?.find(item => item.institution_id === id)?.count || 0;
+        const professorsCount = professorsData?.find(item => item.institution_id === id)?.count || 0;
+        
+        stats![id] = {
+          courses_count: Number(coursesCount),
+          students_count: Number(studentsCount),
+          professors_count: Number(professorsCount),
+          recent_activity: [] // No incluimos actividad reciente en la exportación
+        };
+      });
     }
 
-    // Preparar datos para la respuesta
-    const exportData = {
-      institutions: institutions as Institution[],
-      stats: Object.keys(stats).length > 0 ? stats : undefined,
-      options: exportOptions,
-      metadata: {
-        exportedAt: new Date().toISOString(),
-        totalCount: institutions.length,
-        exportedBy: userId,
-      },
-    };
-
-    return NextResponse.json({
-      success: true,
-      data: exportData,
-      message: `${institutions.length} instituciones preparadas para exportación`,
-    });
-
-  } catch (error) {
-    console.error('Error en API de exportación de instituciones:', error);
-    return NextResponse.json(
-      { success: false, message: 'Error interno del servidor' },
-      { status: 500 }
-    );
-  }
-}
-
-// Endpoint para obtener un resumen de exportación sin ejecutarla
-export async function GET(request: NextRequest) {
-  try {
-    // Verificar autenticación
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, message: 'No autorizado' },
-        { status: 401 }
-      );
-    }
-
-    // Obtener parámetros de query
-    const { searchParams } = new URL(request.url);
-    const includeStats = searchParams.get('includeStats') === 'true';
-    const search = searchParams.get('search');
-    const dateFrom = searchParams.get('dateFrom');
-    const dateTo = searchParams.get('dateTo');
-
-    // Crear cliente de Supabase
-    const supabase = createClient();
-
-    // Construir query para contar
-    let query = supabase
-      .from('institutions')
-      .select('id', { count: 'exact', head: true });
-
-    // Aplicar filtros
-    if (dateFrom) {
-      query = query.gte('created_at', dateFrom);
-    }
-    
-    if (dateTo) {
-      const toDate = new Date(dateTo);
-      toDate.setHours(23, 59, 59, 999);
-      query = query.lte('created_at', toDate.toISOString());
-    }
-
-    if (search) {
-      query = query.ilike('name', `%${search}%`);
-    }
-
-    // Ejecutar query
-    const { count, error } = await query;
-
-    if (error) {
-      console.error('Error al contar instituciones:', error);
-      return NextResponse.json(
-        { success: false, message: 'Error al obtener resumen de exportación' },
-        { status: 500 }
-      );
-    }
-
-    // Estimar tamaño del archivo
-    const estimatedSize = estimateFileSize(count || 0, includeStats);
-
+    // Devolver datos para exportación
     return NextResponse.json({
       success: true,
       data: {
-        totalInstitutions: count || 0,
-        includeStats,
-        estimatedSize,
-        filters: {
-          search: search || null,
-          dateFrom: dateFrom || null,
-          dateTo: dateTo || null,
-        },
-      },
+        institutions,
+        stats,
+        totalCount: institutions.length
+      }
     });
-
+    
   } catch (error) {
-    console.error('Error en resumen de exportación:', error);
+    console.error('Error en exportación de instituciones:', error);
     return NextResponse.json(
-      { success: false, message: 'Error interno del servidor' },
+      { success: false, message: 'Error al procesar la solicitud de exportación' },
       { status: 500 }
     );
   }
 }
 
-// Función auxiliar para estimar tamaño de archivo
-function estimateFileSize(institutionCount: number, includeStats: boolean): string {
+/**
+ * Endpoint para obtener resumen de exportación sin descargar
+ * GET /api/institutions/export
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const searchParams = request.nextUrl.searchParams;
+    const format = searchParams.get('format') as 'excel' | 'pdf' || 'excel';
+    const includeStats = searchParams.get('includeStats') === 'true';
+    
+    // Crear cliente de Supabase
+    const supabase = createClient();
+    
+    // Obtener conteo total de instituciones
+    const { count, error } = await supabase
+      .from('institutions')
+      .select('*', { count: 'exact', head: true });
+    
+    if (error) {
+      console.error('Error al obtener conteo de instituciones:', error);
+      return NextResponse.json(
+        { success: false, message: 'Error al obtener información de exportación' },
+        { status: 500 }
+      );
+    }
+    
+    // Devolver resumen
+    return NextResponse.json({
+      success: true,
+      data: {
+        totalCount: count || 0,
+        format,
+        includeStats,
+        estimatedSize: estimateFileSize(count || 0, { format, includeStats })
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error al obtener resumen de exportación:', error);
+    return NextResponse.json(
+      { success: false, message: 'Error al procesar la solicitud' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * Estima el tamaño del archivo basado en la cantidad de datos
+ */
+function estimateFileSize(institutionCount: number, options: { format: string, includeStats: boolean }): string {
+  // Estimación aproximada basada en el contenido
   let baseSize = institutionCount * 200; // ~200 bytes por institución base
   
-  if (includeStats) {
+  if (options.includeStats) {
     baseSize += institutionCount * 50; // +50 bytes por estadísticas
+  }
+  
+  if (options.format === 'pdf') {
+    baseSize *= 2; // PDFs son generalmente más grandes
   }
   
   // Convertir a unidades legibles

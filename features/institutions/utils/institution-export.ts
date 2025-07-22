@@ -2,6 +2,21 @@ import jsPDF from 'jspdf';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Institution, InstitutionExportOptions, InstitutionStats } from '../types';
+import { exportToXLSX, ExportError, ExcelExportConfig } from './excel-export';
+
+// Configuración para exportación PDF
+export interface PDFExportConfig {
+  maxRows: number;
+  maxFileSize: number; // en MB
+  timeout: number; // en ms
+  pageFormat: 'a4' | 'letter';
+  orientation: 'portrait' | 'landscape';
+  includeHeader: boolean;
+  includeFooter: boolean;
+}
+
+// Tipos de error específicos para PDF
+export type PDFExportError = ExportError;
 
 // Tipos para los datos de exportación
 export interface ExportData {
@@ -13,204 +28,596 @@ export interface ExportData {
 /**
  * Genera y descarga un archivo Excel con los datos de instituciones
  */
-export async function exportToExcel(data: ExportData): Promise<void> {
+export async function exportToExcel(
+  data: ExportData,
+  config?: ExcelExportConfig
+): Promise<void> {
+  // Validaciones iniciales
+  if (!data.institutions || data.institutions.length === 0) {
+    throw createExcelError('DATA_ERROR', 'No hay instituciones para exportar');
+  }
+
+  try {
+    // Usar la exportación XLSX para un formato Excel más profesional
+    await exportToXLSX(data.institutions, data.options, data.stats, config);
+  } catch (error) {
+    console.error('Error al exportar a Excel:', error);
+    
+    // Si es un error de exportación personalizado, re-lanzarlo
+    if (error instanceof Error && 'code' in error) {
+      throw error;
+    }
+    
+    // Fallback a CSV si falla la exportación XLSX
+    try {
+      console.warn('Intentando fallback a CSV debido a error en XLSX');
+      await exportToCSVFallback(data);
+    } catch (fallbackError) {
+      console.error('Error en fallback CSV:', fallbackError);
+      throw createExcelError('GENERATION_ERROR', 'Error al generar el archivo Excel y su alternativa CSV', {
+        originalError: error,
+        fallbackError
+      });
+    }
+  }
+}
+
+/**
+ * Exportación de fallback a CSV cuando falla XLSX
+ */
+async function exportToCSVFallback(data: ExportData): Promise<void> {
   try {
     // Crear el contenido CSV (Excel puede abrir archivos CSV)
     const csvContent = generateCSVContent(data);
     
+    // Verificar que el contenido no esté vacío
+    if (!csvContent || csvContent.trim().length === 0) {
+      throw createExcelError('DATA_ERROR', 'No se pudo generar contenido CSV válido');
+    }
+    
     // Crear blob y descargar
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    
+    // Verificar soporte del navegador
+    if (!window.URL || !window.URL.createObjectURL) {
+      throw createExcelError('PERMISSION_ERROR', 'Su navegador no soporta la descarga de archivos');
+    }
+    
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     
-    if (link.download !== undefined) {
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', generateFileName('excel', data.options));
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+    if (!link.download) {
       URL.revokeObjectURL(url);
+      throw createExcelError('PERMISSION_ERROR', 'Su navegador no soporta la descarga automática de archivos');
     }
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', generateFileName('excel', data.options));
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Limpiar URL después de un tiempo
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 1000);
+    
   } catch (error) {
-    console.error('Error al exportar a Excel:', error);
-    throw new Error('Error al generar el archivo Excel');
+    if (error instanceof Error && 'code' in error) {
+      throw error;
+    }
+    throw createExcelError('DOWNLOAD_ERROR', 'Error al descargar el archivo CSV', error);
   }
+}
+
+/**
+ * Crea un error de exportación Excel tipado
+ */
+function createExcelError(code: ExportError['code'], message: string, details?: any): ExportError & Error {
+  const error = new Error(message) as ExportError & Error;
+  error.code = code;
+  error.details = details;
+  return error;
 }
 
 /**
  * Genera y descarga un archivo PDF con los datos de instituciones
  */
-export async function exportToPDF(data: ExportData): Promise<void> {
+export async function exportToPDF(
+  data: ExportData,
+  config: PDFExportConfig = {
+    maxRows: 5000,
+    maxFileSize: 25, // 25MB
+    timeout: 45000, // 45 segundos
+    pageFormat: 'a4',
+    orientation: 'landscape',
+    includeHeader: true,
+    includeFooter: true
+  }
+): Promise<void> {
+  // Validaciones iniciales
+  if (!data.institutions || data.institutions.length === 0) {
+    throw createPDFError('DATA_ERROR', 'No hay instituciones para exportar');
+  }
+
+  if (data.institutions.length > config.maxRows) {
+    throw createPDFError('DATA_ERROR', `Demasiadas instituciones para exportar. Máximo permitido: ${config.maxRows}`);
+  }
+
+  // Configurar timeout
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => {
+      reject(createPDFError('GENERATION_ERROR', 'Tiempo de espera agotado durante la exportación PDF'));
+    }, config.timeout);
+  });
+
   try {
-    const pdf = new jsPDF();
+    // Ejecutar la exportación con timeout
+    await Promise.race([
+      performPDFExport(data, config),
+      timeoutPromise
+    ]);
+  } catch (error) {
+    if (error instanceof Error && 'code' in error) {
+      throw error; // Re-lanzar errores de exportación personalizados
+    }
+    
+    console.error('Error inesperado al exportar a PDF:', error);
+    throw createPDFError('GENERATION_ERROR', 'Error inesperado durante la exportación PDF', error);
+  }
+}
+
+/**
+ * Realiza la exportación PDF real
+ */
+async function performPDFExport(data: ExportData, config: PDFExportConfig): Promise<void> {
+  let pdf: jsPDF;
+  
+  try {
+    // Configurar el documento PDF
+    pdf = new jsPDF({
+      orientation: config.orientation,
+      unit: 'mm',
+      format: config.pageFormat
+    });
     
     // Configuración inicial
     pdf.setFont('helvetica');
-    let yPosition = 20;
-    const pageHeight = pdf.internal.pageSize.height;
-    const margin = 20;
-    const lineHeight = 7;
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 15;
+    const lineHeight = 6;
+    let yPosition = margin;
     
-    // Título del documento
-    pdf.setFontSize(18);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('Reporte de Instituciones', margin, yPosition);
-    yPosition += 15;
-    
-    // Información del reporte
-    pdf.setFontSize(10);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text(`Generado el: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es })}`, margin, yPosition);
-    yPosition += 7;
-    pdf.text(`Total de instituciones: ${data.institutions.length}`, margin, yPosition);
-    yPosition += 15;
-    
-    // Encabezados de tabla
-    pdf.setFontSize(8);
-    pdf.setFont('helvetica', 'bold');
-    
-    const headers = ['Nombre', 'Dirección', 'Teléfono', 'Email', 'Fecha Creación'];
-    if (data.options.includeStats) {
-      headers.push('Cursos', 'Estudiantes', 'Profesores');
+    // Verificar si jsPDF se inicializó correctamente
+    if (!pdf.internal) {
+      throw createPDFError('GENERATION_ERROR', 'Error al inicializar el generador PDF');
     }
     
-    // Dibujar encabezados
-    let xPosition = margin;
-    const columnWidths = data.options.includeStats 
-      ? [40, 35, 25, 35, 25, 15, 15, 15] 
-      : [50, 45, 30, 40, 25];
+    // Título del documento (si está habilitado)
+    if (config.includeHeader) {
+      yPosition = addPDFHeader(pdf, data, yPosition, margin, pageWidth);
+    }
     
-    headers.forEach((header, index) => {
-      pdf.text(header, xPosition, yPosition);
-      xPosition += columnWidths[index];
-    });
+    // Configurar columnas basado en la orientación y estadísticas
+    const { headers, columnWidths } = configurePDFColumns(data.options, config.orientation, pageWidth, margin);
     
-    yPosition += 10;
+    // Dibujar encabezados de tabla
+    yPosition = drawPDFTableHeaders(pdf, headers, columnWidths, yPosition, margin);
     
-    // Línea separadora
-    pdf.line(margin, yPosition - 3, margin + 180, yPosition - 3);
+    // Procesar datos de instituciones
+    let currentPage = 1;
+    const maxYPosition = pageHeight - (config.includeFooter ? 25 : 15);
     
-    // Datos de instituciones
-    pdf.setFont('helvetica', 'normal');
-    
-    for (const institution of data.institutions) {
+    for (let i = 0; i < data.institutions.length; i++) {
+      const institution = data.institutions[i];
+      
       // Verificar si necesitamos una nueva página
-      if (yPosition > pageHeight - 30) {
+      if (yPosition > maxYPosition) {
+        // Añadir pie de página a la página actual
+        if (config.includeFooter) {
+          addPDFFooter(pdf, currentPage, Math.ceil(data.institutions.length / 35), pageWidth, pageHeight);
+        }
+        
         pdf.addPage();
-        yPosition = 20;
+        currentPage++;
+        yPosition = margin;
+        
+        // Repetir encabezados en nueva página
+        if (config.includeHeader) {
+          yPosition = addPDFHeader(pdf, data, yPosition, margin, pageWidth, true);
+        }
+        yPosition = drawPDFTableHeaders(pdf, headers, columnWidths, yPosition, margin);
       }
       
-      xPosition = margin;
-      const stats = data.stats?.[institution.id];
-      
-      // Truncar texto largo para que quepa en las columnas
-      const rowData = [
-        truncateText(institution.name, 25),
-        truncateText(institution.address || 'N/A', 20),
-        truncateText(institution.phone || 'N/A', 15),
-        truncateText(institution.email || 'N/A', 20),
-        format(new Date(institution.created_at), 'dd/MM/yyyy', { locale: es }),
-      ];
-      
-      if (data.options.includeStats && stats) {
-        rowData.push(
-          stats.courses_count.toString(),
-          stats.students_count.toString(),
-          stats.professors_count.toString()
-        );
+      // Dibujar fila de datos
+      yPosition = drawPDFTableRow(pdf, institution, data.stats?.[institution.id], data.options, columnWidths, yPosition, margin);
+    }
+    
+    // Añadir pie de página a la última página
+    if (config.includeFooter) {
+      const totalPages = pdf.internal.pages.length - 1;
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        addPDFFooter(pdf, i, totalPages, pageWidth, pageHeight);
       }
-      
-      rowData.forEach((text, index) => {
-        pdf.text(text, xPosition, yPosition);
-        xPosition += columnWidths[index];
-      });
-      
-      yPosition += lineHeight;
     }
     
-    // Pie de página
-    const totalPages = pdf.internal.pages.length - 1;
-    for (let i = 1; i <= totalPages; i++) {
-      pdf.setPage(i);
-      pdf.setFontSize(8);
-      pdf.text(
-        `Página ${i} de ${totalPages}`,
-        pdf.internal.pageSize.width - 40,
-        pdf.internal.pageSize.height - 10
-      );
+    // Verificar tamaño del archivo antes de guardar
+    const pdfOutput = pdf.output('arraybuffer');
+    const fileSizeInMB = pdfOutput.byteLength / (1024 * 1024);
+    
+    if (fileSizeInMB > config.maxFileSize) {
+      throw createPDFError('GENERATION_ERROR', `El archivo PDF es demasiado grande (${fileSizeInMB.toFixed(2)}MB). Máximo permitido: ${config.maxFileSize}MB`);
     }
     
-    // Descargar el PDF
-    pdf.save(generateFileName('pdf', data.options));
+    // Generar nombre del archivo y descargar
+    const fileName = generateFileName('pdf', data.options);
+    
+    try {
+      pdf.save(fileName);
+    } catch (saveError) {
+      throw createPDFError('DOWNLOAD_ERROR', 'Error al descargar el archivo PDF', saveError);
+    }
     
   } catch (error) {
-    console.error('Error al exportar a PDF:', error);
-    throw new Error('Error al generar el archivo PDF');
+    if (error instanceof Error && 'code' in error) {
+      throw error; // Re-lanzar errores de exportación personalizados
+    }
+    
+    // Manejar errores específicos de jsPDF
+    if (error instanceof Error) {
+      if (error.message.includes('Invalid PDF')) {
+        throw createPDFError('GENERATION_ERROR', 'Error al generar el PDF: formato inválido');
+      }
+      if (error.message.includes('out of memory')) {
+        throw createPDFError('GENERATION_ERROR', 'No hay suficiente memoria para generar el PDF');
+      }
+      if (error.message.includes('Maximum call stack')) {
+        throw createPDFError('GENERATION_ERROR', 'Demasiados datos para procesar en el PDF');
+      }
+    }
+    
+    throw createPDFError('GENERATION_ERROR', 'Error al generar el archivo PDF', error);
   }
+}
+
+/**
+ * Añade el encabezado al PDF
+ */
+function addPDFHeader(pdf: jsPDF, data: ExportData, yPosition: number, margin: number, pageWidth: number, isSubsequentPage = false): number {
+  // Título principal
+  if (!isSubsequentPage) {
+    pdf.setFontSize(16);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Reporte de Instituciones', margin, yPosition);
+    yPosition += 12;
+  } else {
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Reporte de Instituciones (continuación)', margin, yPosition);
+    yPosition += 8;
+  }
+  
+  // Información del reporte
+  pdf.setFontSize(9);
+  pdf.setFont('helvetica', 'normal');
+  
+  const reportInfo = [
+    `Generado el: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es })}`,
+    `Total de instituciones: ${data.institutions.length}`
+  ];
+  
+  // Añadir información de filtros si existen
+  if (data.options.dateRange?.from || data.options.dateRange?.to) {
+    let dateRangeText = 'Período: ';
+    if (data.options.dateRange.from && data.options.dateRange.to) {
+      dateRangeText += `${format(data.options.dateRange.from, 'dd/MM/yyyy', { locale: es })} - ${format(data.options.dateRange.to, 'dd/MM/yyyy', { locale: es })}`;
+    } else if (data.options.dateRange.from) {
+      dateRangeText += `Desde ${format(data.options.dateRange.from, 'dd/MM/yyyy', { locale: es })}`;
+    } else if (data.options.dateRange.to) {
+      dateRangeText += `Hasta ${format(data.options.dateRange.to, 'dd/MM/yyyy', { locale: es })}`;
+    }
+    reportInfo.push(dateRangeText);
+  }
+  
+  if (data.options.includeStats) {
+    reportInfo.push('Incluye estadísticas de cursos, estudiantes y profesores');
+  }
+  
+  reportInfo.forEach(info => {
+    pdf.text(info, margin, yPosition);
+    yPosition += 5;
+  });
+  
+  yPosition += 5; // Espacio adicional
+  return yPosition;
+}
+
+/**
+ * Configura las columnas del PDF basado en las opciones
+ */
+function configurePDFColumns(options: InstitutionExportOptions, orientation: string, pageWidth: number, margin: number) {
+  const availableWidth = pageWidth - (margin * 2);
+  
+  const headers = ['Nombre', 'Dirección', 'Teléfono', 'Email', 'Fecha Creación'];
+  let columnWidths: number[];
+  
+  if (options.includeStats) {
+    headers.push('Cursos', 'Estudiantes', 'Profesores');
+    // Distribución para landscape con estadísticas
+    columnWidths = orientation === 'landscape' 
+      ? [50, 45, 25, 40, 25, 18, 18, 18] 
+      : [35, 30, 20, 30, 20, 12, 12, 12]; // Portrait más compacto
+  } else {
+    // Distribución sin estadísticas
+    columnWidths = orientation === 'landscape'
+      ? [60, 55, 35, 50, 30]
+      : [40, 35, 25, 35, 25];
+  }
+  
+  // Ajustar anchos proporcionalmente si exceden el ancho disponible
+  const totalWidth = columnWidths.reduce((sum, width) => sum + width, 0);
+  if (totalWidth > availableWidth) {
+    const scaleFactor = availableWidth / totalWidth;
+    columnWidths = columnWidths.map(width => width * scaleFactor);
+  }
+  
+  return { headers, columnWidths };
+}
+
+/**
+ * Dibuja los encabezados de la tabla
+ */
+function drawPDFTableHeaders(pdf: jsPDF, headers: string[], columnWidths: number[], yPosition: number, margin: number): number {
+  pdf.setFontSize(8);
+  pdf.setFont('helvetica', 'bold');
+  
+  let xPosition = margin;
+  headers.forEach((header, index) => {
+    pdf.text(header, xPosition, yPosition);
+    xPosition += columnWidths[index];
+  });
+  
+  yPosition += 8;
+  
+  // Línea separadora
+  const totalWidth = columnWidths.reduce((sum, width) => sum + width, 0);
+  pdf.line(margin, yPosition - 2, margin + totalWidth, yPosition - 2);
+  
+  return yPosition;
+}
+
+/**
+ * Dibuja una fila de datos de institución
+ */
+function drawPDFTableRow(
+  pdf: jsPDF, 
+  institution: Institution, 
+  stats: InstitutionStats | undefined, 
+  options: InstitutionExportOptions,
+  columnWidths: number[], 
+  yPosition: number, 
+  margin: number
+): number {
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(7);
+  
+  let xPosition = margin;
+  
+  // Preparar datos de la fila
+  const rowData = [
+    truncateText(institution.name, 25),
+    truncateText(institution.address || 'N/A', 20),
+    truncateText(institution.phone || 'N/A', 15),
+    truncateText(institution.email || 'N/A', 20),
+    format(new Date(institution.created_at), 'dd/MM/yyyy', { locale: es }),
+  ];
+  
+  if (options.includeStats) {
+    if (stats) {
+      rowData.push(
+        stats.courses_count.toString(),
+        stats.students_count.toString(),
+        stats.professors_count.toString()
+      );
+    } else {
+      rowData.push('0', '0', '0');
+    }
+  }
+  
+  // Dibujar cada celda
+  rowData.forEach((text, index) => {
+    pdf.text(text, xPosition, yPosition);
+    xPosition += columnWidths[index];
+  });
+  
+  return yPosition + 5;
+}
+
+/**
+ * Añade el pie de página
+ */
+function addPDFFooter(pdf: jsPDF, currentPage: number, totalPages: number, pageWidth: number, pageHeight: number): void {
+  pdf.setFontSize(8);
+  pdf.setFont('helvetica', 'normal');
+  
+  // Número de página
+  pdf.text(
+    `Página ${currentPage} de ${totalPages}`,
+    pageWidth - 40,
+    pageHeight - 10
+  );
+  
+  // Información adicional en la primera página
+  if (currentPage === 1) {
+    pdf.text(
+      'Generado por Sistema de Gestión Escolar',
+      15,
+      pageHeight - 10
+    );
+  }
+}
+
+/**
+ * Crea un error de exportación PDF tipado
+ */
+function createPDFError(code: PDFExportError['code'], message: string, details?: any): PDFExportError & Error {
+  const error = new Error(message) as PDFExportError & Error;
+  error.code = code;
+  error.details = details;
+  return error;
 }
 
 /**
  * Genera el contenido CSV para exportación a Excel
  */
 function generateCSVContent(data: ExportData): string {
-  const { institutions, stats, options } = data;
-  
-  // Encabezados
-  const headers = [
-    'Nombre',
-    'Dirección',
-    'Teléfono',
-    'Email',
-    'Fecha de Creación',
-    'Última Actualización'
-  ];
-  
-  if (options.includeStats) {
-    headers.push('Cursos', 'Estudiantes', 'Profesores');
-  }
-  
-  // Crear filas de datos
-  const rows = institutions.map(institution => {
-    const institutionStats = stats?.[institution.id];
+  try {
+    const { institutions, stats, options } = data;
     
-    const row = [
-      escapeCSV(institution.name),
-      escapeCSV(institution.address || ''),
-      escapeCSV(institution.phone || ''),
-      escapeCSV(institution.email || ''),
-      format(new Date(institution.created_at), 'dd/MM/yyyy HH:mm', { locale: es }),
-      format(new Date(institution.updated_at), 'dd/MM/yyyy HH:mm', { locale: es })
-    ];
-    
-    if (options.includeStats && institutionStats) {
-      row.push(
-        institutionStats.courses_count.toString(),
-        institutionStats.students_count.toString(),
-        institutionStats.professors_count.toString()
-      );
-    } else if (options.includeStats) {
-      row.push('0', '0', '0');
+    // Validar datos de entrada
+    if (!institutions || !Array.isArray(institutions) || institutions.length === 0) {
+      throw new Error('No hay datos de instituciones para generar CSV');
     }
     
-    return row;
-  });
-  
-  // Combinar encabezados y filas
-  const allRows = [headers, ...rows];
-  
-  // Convertir a CSV
-  return allRows.map(row => row.join(',')).join('\n');
+    // Encabezados
+    const headers = [
+      'Nombre',
+      'Dirección',
+      'Teléfono',
+      'Email',
+      'Fecha de Creación',
+      'Última Actualización'
+    ];
+    
+    if (options.includeStats) {
+      headers.push('Cursos', 'Estudiantes', 'Profesores');
+    }
+    
+    // Crear filas de datos con manejo de errores
+    const rows = institutions.map((institution, index) => {
+      try {
+        const institutionStats = stats?.[institution.id];
+        
+        const row = [
+          escapeCSV(institution.name || `Institución ${index + 1}`),
+          escapeCSV(institution.address || ''),
+          escapeCSV(institution.phone || ''),
+          escapeCSV(institution.email || ''),
+          institution.created_at ? format(new Date(institution.created_at), 'dd/MM/yyyy HH:mm', { locale: es }) : 'N/A',
+          institution.updated_at ? format(new Date(institution.updated_at), 'dd/MM/yyyy HH:mm', { locale: es }) : 'N/A'
+        ];
+        
+        if (options.includeStats) {
+          if (institutionStats) {
+            row.push(
+              (institutionStats.courses_count || 0).toString(),
+              (institutionStats.students_count || 0).toString(),
+              (institutionStats.professors_count || 0).toString()
+            );
+          } else {
+            row.push('0', '0', '0');
+          }
+        }
+        
+        return row;
+      } catch (rowError) {
+        console.warn(`Error procesando institución ${index} para CSV:`, rowError);
+        // Retornar fila con datos básicos en caso de error
+        const fallbackRow = [
+          escapeCSV(institution.name || `Institución ${index + 1}`),
+          'Error al procesar',
+          '',
+          '',
+          'N/A',
+          'N/A'
+        ];
+        
+        if (options.includeStats) {
+          fallbackRow.push('0', '0', '0');
+        }
+        
+        return fallbackRow;
+      }
+    });
+    
+    // Añadir información de metadatos al inicio
+    const metaRows = [
+      ['# Reporte de Instituciones'],
+      [`# Generado el: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es })}`],
+      [`# Total de instituciones: ${institutions.length}`]
+    ];
+    
+    // Añadir información de filtros si existen
+    if (options.dateRange?.from || options.dateRange?.to) {
+      let dateRangeText = '# Rango de fechas: ';
+      try {
+        if (options.dateRange.from && options.dateRange.to) {
+          dateRangeText += `${format(options.dateRange.from, 'dd/MM/yyyy', { locale: es })} - ${format(options.dateRange.to, 'dd/MM/yyyy', { locale: es })}`;
+        } else if (options.dateRange.from) {
+          dateRangeText += `Desde ${format(options.dateRange.from, 'dd/MM/yyyy', { locale: es })}`;
+        } else if (options.dateRange.to) {
+          dateRangeText += `Hasta ${format(options.dateRange.to, 'dd/MM/yyyy', { locale: es })}`;
+        }
+      } catch (dateError) {
+        console.warn('Error formateando fechas para CSV:', dateError);
+        dateRangeText += 'Error en formato de fecha';
+      }
+      metaRows.push([dateRangeText]);
+    }
+    
+    if (options.includeStats) {
+      metaRows.push(['# Incluye estadísticas de cursos, estudiantes y profesores']);
+    }
+    
+    metaRows.push(['']); // Fila vacía para separación
+    
+    // Combinar metadatos, encabezados y filas
+    const allRows = [...metaRows, headers, ...rows];
+    
+    // Convertir a CSV
+    const csvContent = allRows.map(row => row.join(',')).join('\n');
+    
+    // Validar que el contenido no esté vacío
+    if (!csvContent || csvContent.trim().length === 0) {
+      throw new Error('El contenido CSV generado está vacío');
+    }
+    
+    return csvContent;
+    
+  } catch (error) {
+    console.error('Error generando contenido CSV:', error);
+    // Retornar CSV mínimo en caso de error
+    return [
+      '# Error al generar reporte',
+      '# Se produjo un error al procesar la información',
+      '',
+      'Nombre,Error',
+      'Error al procesar datos,Contacte al administrador'
+    ].join('\n');
+  }
 }
 
 /**
  * Escapa caracteres especiales para CSV
  */
 function escapeCSV(text: string): string {
-  if (text.includes(',') || text.includes('"') || text.includes('\n')) {
-    return `"${text.replace(/"/g, '""')}"`;
+  if (!text || typeof text !== 'string') {
+    return '';
   }
-  return text;
+  
+  // Escapar comillas dobles duplicándolas
+  let escapedText = text.replace(/"/g, '""');
+  
+  // Si contiene caracteres especiales, envolver en comillas
+  if (escapedText.includes(',') || escapedText.includes('"') || escapedText.includes('\n') || escapedText.includes('\r')) {
+    return `"${escapedText}"`;
+  }
+  
+  return escapedText;
 }
 
 /**
@@ -254,21 +661,52 @@ function generateFileName(format: 'excel' | 'pdf', options: InstitutionExportOpt
 export async function exportInstitutions(
   institutions: Institution[],
   options: InstitutionExportOptions,
-  stats?: Record<string, InstitutionStats>
+  stats?: Record<string, InstitutionStats>,
+  excelConfig?: ExcelExportConfig,
+  pdfConfig?: PDFExportConfig
 ): Promise<void> {
+  // Validar opciones antes de proceder
+  const validationErrors = validateExportOptions(options);
+  if (validationErrors.length > 0) {
+    throw createExportError('DATA_ERROR', `Opciones de exportación inválidas: ${validationErrors.join(', ')}`);
+  }
+
   const exportData: ExportData = {
     institutions,
     stats,
     options,
   };
   
-  if (options.format === 'excel') {
-    await exportToExcel(exportData);
-  } else if (options.format === 'pdf') {
-    await exportToPDF(exportData);
-  } else {
-    throw new Error('Formato de exportación no soportado');
+  try {
+    if (options.format === 'excel') {
+      await exportToExcel(exportData, excelConfig);
+    } else if (options.format === 'pdf') {
+      await exportToPDF(exportData, pdfConfig);
+    } else {
+      throw createExportError('DATA_ERROR', `Formato de exportación no soportado: ${options.format}`);
+    }
+  } catch (error) {
+    // Log del error para debugging
+    console.error('Error en exportInstitutions:', error);
+    
+    // Re-lanzar errores de exportación personalizados
+    if (error instanceof Error && 'code' in error) {
+      throw error;
+    }
+    
+    // Crear error genérico para errores inesperados
+    throw createExportError('GENERATION_ERROR', 'Error inesperado durante la exportación', error);
   }
+}
+
+/**
+ * Crea un error de exportación genérico
+ */
+function createExportError(code: ExportError['code'], message: string, details?: any): ExportError & Error {
+  const error = new Error(message) as ExportError & Error;
+  error.code = code;
+  error.details = details;
+  return error;
 }
 
 /**
