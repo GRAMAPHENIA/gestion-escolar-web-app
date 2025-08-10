@@ -19,3 +19,17 @@ export {
   useInstitutionStatsRealtime,
   clearInstitutionStatsCache 
 } from './use-institution-stats';
+
+export { useErrorHandler } from './use-error-handler';
+export type { ErrorDetails, UseErrorHandlerReturn } from './use-error-handler';
+
+export { 
+  useLoadingState, 
+  useInstitutionLoadingState, 
+  useProgressiveLoading, 
+  useDebouncedLoading 
+} from './use-loading-state';
+export type { 
+  LoadingState, 
+  UseLoadingStateReturn 
+} from './use-loading-state';

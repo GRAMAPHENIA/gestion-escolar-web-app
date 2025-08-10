@@ -163,21 +163,24 @@
 
   - [x] 8.4 Build institution edit page
 
-
     - Create /app/dashboard/instituciones/[id]/editar/page.tsx
     - Pre-populate form with existing data
     - Add cancel functionality with unsaved changes warning
     - Implement success feedback and navigation
     - _Requirements: 3.1, 3.4, 3.5, 3.6_
 
-- [ ] 9. Add comprehensive error handling and loading states
-  - [ ] 9.1 Implement error boundaries
+- [x] 9. Add comprehensive error handling and loading states
+
+
+  - [x] 9.1 Implement error boundaries
+
     - Create institution-specific error boundary
     - Add fallback UI for component errors
     - Implement error reporting and logging
     - _Requirements: 8.4, 8.5_
 
-  - [ ] 9.2 Create loading components
+  - [x] 9.2 Create loading components
+
     - Build skeleton loaders for list and detail views
     - Add spinner components for actions
     - Implement progressive loading for large datasets
