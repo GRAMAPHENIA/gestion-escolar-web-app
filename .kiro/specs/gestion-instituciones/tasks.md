@@ -9,26 +9,14 @@
 
 - [x] 2. Implement Supabase integration and API routes
 
-
-
-
-
   - [x] 2.1 Create API route for fetching institutions list
-
-
 
     - Write GET /api/institutions with filtering and pagination
     - Implement search functionality with ILIKE queries
     - Add sorting and pagination logic
     - _Requirements: 2.1, 2.2, 6.1, 6.2_
 
-
   - [x] 2.2 Create API route for individual institution operations
-
-
-
-
-
 
     - Write GET /api/institutions/[id] for detailed view
     - Implement POST /api/institutions for creation
@@ -36,12 +24,7 @@
     - Create DELETE /api/institutions/[id] with validation
     - _Requirements: 1.3, 3.3, 4.1, 5.4_
 
-
   - [x] 2.3 Implement institution statistics queries
-
-
-
-
 
     - Write complex query to get courses, students, and professors count
     - Create endpoint for institution dashboard metrics
@@ -50,12 +33,7 @@
 
 - [x] 3. Create custom hooks for data management
 
-
-
-
-
   - [x] 3.1 Implement useInstitutions hook
-
 
     - Create hook for CRUD operations
     - Add loading and error state management
@@ -64,20 +42,12 @@
 
   - [x] 3.2 Create useInstitutionSearch hook
 
-
     - Implement debounced search functionality
     - Add filter state management
     - Create sorting and pagination logic
     - _Requirements: 6.1, 6.2, 6.5_
 
-
-
   - [x] 3.3 Build useInstitutionStats hook
-
-
-
-
-
 
     - Fetch and manage institution statistics
     - Handle loading states for metrics
@@ -86,12 +56,7 @@
 
 - [x] 4. Build core UI components
 
-
-
-
-
   - [x] 4.1 Create InstitutionForm component
-
 
     - Build reusable form with react-hook-form
     - Implement real-time validation with Zod
@@ -101,7 +66,6 @@
 
   - [x] 4.2 Implement InstitutionCard component
 
-
     - Design card layout with institution info
     - Add quick action buttons (view, edit, delete)
     - Implement hover states and animations
@@ -109,7 +73,6 @@
     - _Requirements: 2.1, 2.5_
 
   - [x] 4.3 Build InstitutionList component
-
 
     - Create responsive table layout
     - Implement sorting by clicking column headers
@@ -119,12 +82,7 @@
 
 - [x] 5. Implement search and filtering functionality
 
-
-
-
-
   - [x] 5.1 Create InstitutionSearch component
-
 
     - Build search input with debounced functionality
     - Add search suggestions dropdown
@@ -132,7 +90,6 @@
     - _Requirements: 6.1, 6.2_
 
   - [x] 5.2 Build InstitutionFilters component
-
 
     - Create date range picker for creation date
     - Add sorting options dropdown
@@ -142,14 +99,7 @@
 
 - [x] 6. Create detailed view and management pages
 
-
-
-
-
   - [x] 6.1 Implement InstitutionDetail component
-
-
-
 
     - Design detailed view layout with all institution info
     - Add statistics cards for courses, students, professors
@@ -159,9 +109,6 @@
 
   - [x] 6.2 Build InstitutionDeleteDialog component
 
-
-
-
     - Create confirmation dialog with warning messages
     - Show consequences of deletion (associated data)
     - Implement soft delete option if needed
@@ -170,30 +117,16 @@
 
 - [x] 7. Implement export functionality
 
-
-
-
-
   - [x] 7.1 Create InstitutionExport component
-
-
-
-
 
     - Build export options UI (Excel, PDF)
     - Implement file generation with current filters
     - Add progress indicators for large exports
     - Create download functionality
 
-
     - _Requirements: 7.1, 7.2, 7.4, 7.5_
 
   - [x] 7.2 Build export utility functions
-
-
-
-
-
 
     - Create Excel export with proper formatting
     - Implement PDF generation with professional layout
@@ -202,46 +135,25 @@
 
 - [x] 8. Create page components and routing
 
-
-
-
   - [x] 8.1 Build main institutions list page
-
-
-
 
     - Create /app/dashboard/instituciones/page.tsx
     - Integrate search, filters, and list components
     - Add pagination controls
     - Implement loading and error states
 
-
-
     - _Requirements: 2.1, 2.6, 6.1_
 
   - [x] 8.2 Create new institution page
 
-
-
-
-
-
     - Build /app/dashboard/instituciones/nueva/page.tsx
-
-
 
     - Integrate InstitutionForm for creation
     - Add navigation breadcrumbs
     - Implement success redirect after creation
     - _Requirements: 1.1, 1.6_
 
-
-
   - [x] 8.3 Implement institution detail page
-
-
-
-
 
     - Create /app/dashboard/instituciones/[id]/page.tsx
     - Integrate InstitutionDetail component
@@ -249,7 +161,9 @@
     - Handle not found cases gracefully
     - _Requirements: 4.1, 4.5_
 
-  - [ ] 8.4 Build institution edit page
+  - [x] 8.4 Build institution edit page
+
+
     - Create /app/dashboard/instituciones/[id]/editar/page.tsx
     - Pre-populate form with existing data
     - Add cancel functionality with unsaved changes warning

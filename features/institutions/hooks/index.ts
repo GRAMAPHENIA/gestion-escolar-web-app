@@ -5,6 +5,8 @@
 export { useInstitutions } from './use-institutions';
 export type { UseInstitutionsReturn } from './use-institutions';
 
+export { useInstitution } from './use-institution';
+
 export { 
   useInstitutionSearch, 
   useInstitutionSearchSuggestions, 

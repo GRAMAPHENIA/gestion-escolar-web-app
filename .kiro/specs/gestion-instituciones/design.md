@@ -9,6 +9,7 @@ La arquitectura seguirá el patrón de features modulares existente, integrándo
 ## Architecture
 
 ### Component Hierarchy
+
 ```
 /features/institutions/
 ├── components/
@@ -32,6 +33,7 @@ La arquitectura seguirá el patrón de features modulares existente, integrándo
 ```
 
 ### Page Structure
+
 ```
 /app/dashboard/instituciones/
 ├── page.tsx                          # Lista principal de instituciones
@@ -84,8 +86,9 @@ interface InstitutionFilters {
 ### Key Components Design
 
 #### InstitutionList Component
+
 - **Purpose**: Componente principal que muestra la lista de instituciones
-- **Features**: 
+- **Features**:
   - Tabla responsive con paginación
   - Búsqueda en tiempo real
   - Filtros avanzados
@@ -94,6 +97,7 @@ interface InstitutionFilters {
 - **Props**: `institutions`, `loading`, `onSearch`, `onFilter`, `onSort`
 
 #### InstitutionForm Component
+
 - **Purpose**: Formulario reutilizable para crear y editar instituciones
 - **Features**:
   - Validación en tiempo real con Zod
@@ -103,6 +107,7 @@ interface InstitutionFilters {
 - **Props**: `institution?`, `onSubmit`, `onCancel`, `loading`
 
 #### InstitutionDetail Component
+
 - **Purpose**: Vista detallada con información completa y estadísticas
 - **Features**:
   - Información básica de la institución
@@ -115,6 +120,7 @@ interface InstitutionFilters {
 ### State Management Strategy
 
 #### Custom Hooks Pattern
+
 ```typescript
 // use-institutions.ts
 export function useInstitutions() {
@@ -144,6 +150,7 @@ export function useInstitutions() {
 ### Database Integration
 
 #### Supabase Queries
+
 ```sql
 -- Obtener instituciones con estadísticas
 SELECT 
@@ -166,6 +173,7 @@ ORDER BY name ASC;
 ```
 
 #### API Routes Structure
+
 ```typescript
 // /app/api/institutions/route.ts
 export async function GET(request: Request) {
@@ -213,16 +221,19 @@ export const institutionSchema = z.object({
 ## Error Handling
 
 ### Error Boundaries
+
 - Implementar error boundaries específicos para el módulo de instituciones
 - Manejo graceful de errores de red y base de datos
 - Mensajes de error user-friendly con acciones de recuperación
 
 ### Validation Strategy
+
 - Validación client-side con Zod para feedback inmediato
 - Validación server-side para seguridad
 - Mensajes de error contextuales y específicos
 
 ### Loading States
+
 - Skeleton loaders para listas y detalles
 - Spinners para acciones específicas
 - Estados de error con opciones de retry
@@ -230,16 +241,19 @@ export const institutionSchema = z.object({
 ## Testing Strategy
 
 ### Unit Tests
+
 - Componentes individuales con React Testing Library
 - Hooks personalizados con renderHook
 - Utilidades de validación y transformación
 
 ### Integration Tests
+
 - Flujos completos de CRUD
 - Interacciones entre componentes
 - Integración con API routes
 
 ### E2E Tests (Opcional)
+
 - Flujos críticos de usuario
 - Casos de error y recuperación
 - Responsive design en diferentes dispositivos
@@ -247,6 +261,7 @@ export const institutionSchema = z.object({
 ## Performance Considerations
 
 ### Optimization Strategies
+
 - **Lazy Loading**: Componentes de exportación y filtros avanzados
 - **Memoization**: React.memo para componentes de lista
 - **Virtual Scrolling**: Para listas muy grandes (>1000 items)
@@ -254,11 +269,13 @@ export const institutionSchema = z.object({
 - **Pagination**: Límite de 20 instituciones por página
 
 ### Caching Strategy
+
 - React Query para cache de datos
 - Invalidación automática después de mutaciones
 - Cache de búsquedas frecuentes
 
 ### Bundle Optimization
+
 - Code splitting por rutas
 - Tree shaking de utilidades no utilizadas
 - Optimización de imágenes con Next.js Image
@@ -266,16 +283,19 @@ export const institutionSchema = z.object({
 ## Security Considerations
 
 ### Authentication & Authorization
+
 - Verificación de autenticación con Clerk en todas las rutas
 - Middleware de autorización para operaciones sensibles
 - Rate limiting en API routes
 
 ### Data Validation
+
 - Sanitización de inputs en server-side
 - Validación de permisos antes de operaciones CRUD
 - Protección contra SQL injection con Supabase RLS
 
 ### Privacy & Data Protection
+
 - Logs de auditoría para operaciones críticas
 - Encriptación de datos sensibles
 - Cumplimiento con regulaciones de privacidad
@@ -283,12 +303,14 @@ export const institutionSchema = z.object({
 ## Accessibility Features
 
 ### WCAG Compliance
+
 - Navegación por teclado completa
 - Roles ARIA apropiados
 - Contraste de colores accesible
 - Screen reader compatibility
 
 ### User Experience
+
 - Focus management en modales y formularios
 - Indicadores de estado claros
 - Mensajes de error descriptivos
@@ -297,12 +319,14 @@ export const institutionSchema = z.object({
 ## Integration Points
 
 ### Existing System Integration
+
 - Navegación seamless con el dashboard actual
 - Consistencia visual con el tema oscuro existente
 - Integración con el sistema de notificaciones
 - Compatibilidad con el layout responsive actual
 
 ### Future Extensibility
+
 - Hooks reutilizables para otros módulos
 - Componentes base para otras entidades
 - Patrones de diseño escalables

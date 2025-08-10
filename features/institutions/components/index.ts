@@ -8,3 +8,4 @@ export { InstitutionDeleteDialog, InstitutionDeleteDialogSimple } from './instit
 export { InstitutionExport, InstitutionExportCompact } from './institution-export';
 export { InstitutionDetailPage } from './institution-detail-page';
 export { InstitutionEditPage } from './institution-edit-page';
+export { InstitutionEditForm } from './institution-edit-form';
