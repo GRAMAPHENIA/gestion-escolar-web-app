@@ -70,101 +70,165 @@ export async function PUT(
     // Verificar autenticación
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { success: false, message: 'No autorizado' },
-        { status: 401 }
-      );
+      return NextResponse.json({
+        success: false,
+        error: 'No autorizado',
+        code: 'UNAUTHORIZED',
+        details: 'Debe iniciar sesión para actualizar instituciones'
+      }, { status: 401 });
     }
 
     const institutionId = params.id;
 
-    if (!institutionId) {
-      return NextResponse.json(
-        { success: false, message: 'ID de institución requerido' },
-        { status: 400 }
-      );
+    // Validar ID de institución
+    const { validateInstitutionId } = await import('@/features/institutions/utils/institution-validation');
+    const idValidation = validateInstitutionId(institutionId);
+    
+    if (!idValidation.success) {
+      return NextResponse.json({
+        success: false,
+        error: 'ID de institución inválido',
+        code: 'INVALID_ID',
+        details: 'El ID proporcionado no tiene un formato válido'
+      }, { status: 400 });
     }
 
-    // Parsear el cuerpo de la solicitud
-    const body = await request.json();
-    const { name, address, phone, email } = body;
-
-    // Validación básica
-    if (!name || name.trim().length < 2) {
-      return NextResponse.json(
-        { success: false, message: 'El nombre es requerido y debe tener al menos 2 caracteres' },
-        { status: 400 }
-      );
+    // Parsear y validar el cuerpo de la solicitud
+    let body;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      return NextResponse.json({
+        success: false,
+        error: 'Datos de solicitud inválidos',
+        code: 'INVALID_JSON',
+        details: 'El cuerpo de la solicitud debe ser JSON válido'
+      }, { status: 400 });
     }
 
-    if (name.length > 100) {
-      return NextResponse.json(
-        { success: false, message: 'El nombre no puede exceder 100 caracteres' },
-        { status: 400 }
-      );
+    // Validación con Zod
+    const { institutionSchema } = await import('@/features/institutions/utils/institution-validation');
+    const validation = institutionSchema.safeParse(body);
+
+    if (!validation.success) {
+      const fieldErrors: Record<string, string> = {};
+      validation.error.issues.forEach(issue => {
+        const field = issue.path[0] as string;
+        fieldErrors[field] = issue.message;
+      });
+
+      return NextResponse.json({
+        success: false,
+        error: 'Datos de validación inválidos',
+        code: 'VALIDATION_ERROR',
+        details: 'Por favor, corrija los errores en el formulario',
+        fieldErrors
+      }, { status: 400 });
     }
 
-    if (address && address.length > 200) {
-      return NextResponse.json(
-        { success: false, message: 'La dirección no puede exceder 200 caracteres' },
-        { status: 400 }
-      );
-    }
-
-    if (phone && !/^[\+]?[0-9\s\-\(\)]+$/.test(phone)) {
-      return NextResponse.json(
-        { success: false, message: 'Formato de teléfono inválido' },
-        { status: 400 }
-      );
-    }
-
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return NextResponse.json(
-        { success: false, message: 'Formato de email inválido' },
-        { status: 400 }
-      );
-    }
+    const { name, address, phone, email } = validation.data;
 
     // Crear cliente de Supabase
     const supabase = createClient();
 
-    // Verificar que la institución existe
+    // Verificar que la institución existe y obtener datos actuales
     const { data: existingInstitution, error: checkError } = await supabase
       .from('institutions')
-      .select('id')
+      .select('id, name, email')
       .eq('id', institutionId)
       .single();
 
     if (checkError || !existingInstitution) {
-      return NextResponse.json(
-        { success: false, message: 'Institución no encontrada' },
-        { status: 404 }
-      );
+      return NextResponse.json({
+        success: false,
+        error: 'Institución no encontrada',
+        code: 'NOT_FOUND',
+        details: 'La institución que intenta actualizar no existe'
+      }, { status: 404 });
+    }
+
+    // Verificar permisos del usuario
+    const { data: userData } = await supabase
+      .from('users')
+      .select('role, institution_id')
+      .eq('id', userId)
+      .single();
+
+    if (!userData) {
+      return NextResponse.json({
+        success: false,
+        error: 'Usuario no encontrado',
+        code: 'USER_NOT_FOUND',
+        details: 'No se pudo verificar los permisos del usuario'
+      }, { status: 403 });
+    }
+
+    // Solo admin y director pueden actualizar instituciones
+    // Director solo puede actualizar su propia institución
+    const canUpdate = userData.role === 'admin' || 
+      (userData.role === 'director' && userData.institution_id === institutionId);
+
+    if (!canUpdate) {
+      return NextResponse.json({
+        success: false,
+        error: 'Sin permisos para actualizar esta institución',
+        code: 'FORBIDDEN',
+        details: 'No tiene permisos suficientes para realizar esta acción'
+      }, { status: 403 });
     }
 
     // Verificar que no exista otra institución con el mismo nombre
-    const { data: duplicateInstitution } = await supabase
-      .from('institutions')
-      .select('id')
-      .ilike('name', name.trim())
-      .neq('id', institutionId)
-      .single();
+    if (name !== existingInstitution.name) {
+      const { data: duplicateInstitution } = await supabase
+        .from('institutions')
+        .select('id, name')
+        .ilike('name', name)
+        .neq('id', institutionId)
+        .single();
 
-    if (duplicateInstitution) {
-      return NextResponse.json(
-        { success: false, message: 'Ya existe otra institución con ese nombre' },
-        { status: 409 }
-      );
+      if (duplicateInstitution) {
+        return NextResponse.json({
+          success: false,
+          error: 'Ya existe otra institución con ese nombre',
+          code: 'DUPLICATE_NAME',
+          details: `La institución "${duplicateInstitution.name}" ya existe en el sistema`,
+          fieldErrors: {
+            name: 'Ya existe otra institución con este nombre'
+          }
+        }, { status: 409 });
+      }
+    }
+
+    // Verificar que el email no esté siendo usado por otra institución
+    if (email && email !== existingInstitution.email) {
+      const { data: duplicateEmail } = await supabase
+        .from('institutions')
+        .select('id, name')
+        .eq('email', email)
+        .neq('id', institutionId)
+        .single();
+
+      if (duplicateEmail) {
+        return NextResponse.json({
+          success: false,
+          error: 'El email ya está siendo usado por otra institución',
+          code: 'DUPLICATE_EMAIL',
+          details: `El email ${email} ya está registrado para "${duplicateEmail.name}"`,
+          fieldErrors: {
+            email: 'Este email ya está siendo usado por otra institución'
+          }
+        }, { status: 409 });
+      }
     }
 
     // Actualizar la institución
     const { data: updatedInstitution, error: updateError } = await supabase
       .from('institutions')
       .update({
-        name: name.trim(),
-        address: address?.trim() || null,
-        phone: phone?.trim() || null,
-        email: email?.trim() || null,
+        name,
+        address: address || null,
+        phone: phone || null,
+        email: email || null,
         updated_at: new Date().toISOString(),
       })
       .eq('id', institutionId)
@@ -173,20 +237,42 @@ export async function PUT(
 
     if (updateError) {
       console.error('Error updating institution:', updateError);
-      return NextResponse.json(
-        { success: false, message: 'Error al actualizar la institución' },
-        { status: 500 }
-      );
+      
+      // Manejar errores específicos de la base de datos
+      if (updateError.code === '23505') { // Unique constraint violation
+        return NextResponse.json({
+          success: false,
+          error: 'Ya existe una institución con estos datos',
+          code: 'DUPLICATE_CONSTRAINT',
+          details: 'Los datos proporcionados ya existen en el sistema'
+        }, { status: 409 });
+      }
+
+      return NextResponse.json({
+        success: false,
+        error: 'Error al actualizar la institución',
+        code: 'DATABASE_ERROR',
+        details: 'Ocurrió un error al guardar los cambios. Por favor, inténtelo de nuevo'
+      }, { status: 500 });
     }
 
-    return NextResponse.json(updatedInstitution);
+    // Log de auditoría
+    console.log(`Institution updated: ${institutionId} by user: ${userId}`);
+
+    return NextResponse.json({
+      success: true,
+      data: updatedInstitution,
+      message: 'Institución actualizada exitosamente'
+    });
 
   } catch (error) {
     console.error('Error in institution update API:', error);
-    return NextResponse.json(
-      { success: false, message: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      success: false,
+      error: 'Error interno del servidor',
+      code: 'INTERNAL_ERROR',
+      details: 'Ocurrió un error inesperado. Por favor, contacte al soporte técnico'
+    }, { status: 500 });
   }
 }
 
